@@ -199,30 +199,120 @@
             });
         }
 
-        function renderStopDropdown() {
+        async function renderStopDropdown() {
             const stopArea = document.getElementById('stop-selection-ui');
             const select = document.getElementById('stop-select');
             if (!stopArea || !select) return;
+            
             select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
             stopArea.classList.remove('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
+            
             if (!window.currentRouteData || !window.currentRouteData.directions || !window.activeDirection) return;
             const dirData = window.currentRouteData.directions[window.activeDirection];
             if (!dirData || !dirData.stops || !Array.isArray(dirData.stops)) return;
+            
             const isStatic = ['MTR', 'LRT', 'FERRY'].includes(window.currentTransit);
+
+            // --- 🛡️ 前端智能補全系統 (Auto-Hydration) 零寫死版 ---
+            if (!isStatic && dirData.stops.length > 0) {
+                const firstStop = dirData.stops[0];
+                
+                // 🚨 終極修復：判定 name_obj 係咪吉嘅空殼 {}
+                const isNameObjEmpty = !firstStop.name_obj || Object.keys(firstStop.name_obj).length === 0;
+                const missingName = !firstStop.name_tc && !firstStop.name_en && isNameObjEmpty;
+                
+                if (missingName) {
+                    select.innerHTML = `<option value="" disabled selected>🔄 正在向政府索取真實站名...</option>`;
+                    select.disabled = true;
+                    
+                    let detectedAgency = window.currentTransit.toUpperCase();
+                    const testStopId = firstStop.stop_id || firstStop.stop;
+                    const routeNo = window.currentRouteData.route;
+
+                    // 🎯 零寫死智能探測：攞第一個 ID 去撞 API，邊個有反應就係邊間公司
+                    if (testStopId) {
+                        try {
+                            let ctbTest = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${testStopId}`).then(r => r.json()).catch(() => ({}));
+                            if (ctbTest.data && ctbTest.data.name_tc) {
+                                detectedAgency = 'CTB';
+                            } else {
+                                let kmbTest = await fetch(`https://rt.data.gov.hk/v1/transport/kmb/stop/${testStopId}`).then(r => r.json()).catch(() => ({}));
+                                if (kmbTest.data && kmbTest.data.name_tc) {
+                                    detectedAgency = 'KMB';
+                                }
+                            }
+                        } catch (e) {}
+                    }
+
+                    // 批量補全所有車站資料
+                    const promises = dirData.stops.map(async (stop) => {
+                        let stopId = stop.stop_id || stop.stop;
+                        if (!stopId) return stop;
+                        
+                        // 1. 動態生成 api_url
+                        if (!stop.api_url) {
+                            if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
+                                stop.api_url = `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/CTB/${stopId}/${routeNo}`;
+                            } else if (detectedAgency === 'KMB') {
+                                let dirCode = window.activeDirection === 'outbound' ? '1' : '2'; 
+                                stop.api_url = `https://rt.data.gov.hk/v1/transport/kmb/eta/${stopId}/${routeNo}/${dirCode}`;
+                            }
+                        }
+                        
+                        // 2. 獲取真實中英文站名
+                        try {
+                            let url = '';
+                            if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
+                                url = `https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${stopId}`;
+                            } else if (detectedAgency === 'KMB') {
+                                url = `https://rt.data.gov.hk/v1/transport/kmb/stop/${stopId}`;
+                            }
+                            
+                            if (url) {
+                                let res = await fetch(url);
+                                let json = await res.json();
+                                if (json.data) {
+                                    stop.name_tc = json.data.name_tc;
+                                    stop.name_en = json.data.name_en;
+                                    stop.stop_id = stopId;
+                                    // ✅ 將抓到嘅真名塞入去原本個空殼度！
+                                    stop.name_obj = { tc: json.data.name_tc, en: json.data.name_en, sc: json.data.name_sc || json.data.name_tc };
+                                }
+                            }
+                        } catch (e) {}
+                        
+                        return stop;
+                    });
+                    
+                    await Promise.all(promises);
+                    select.disabled = false;
+                }
+            }
+
+            // --- 正式渲染 Dropdown ---
+            select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
 
             dirData.stops.forEach((stop, index) => {
                 let stopName = '';
-                if(isStatic) { stopName = getTranslation(stop.name_key, stop.name_key); }
-                else {
-                    if (stop.name_obj && typeof stop.name_obj === 'object') { stopName = stop.name_obj[currentLang] || stop.name_obj['tc'] || stop.stop_id; }
-                    else if (stop.name_obj && typeof stop.name_obj === 'string') { stopName = stop.name_obj; }
-                    else if (stop.name_tc || stop.name_en) { stopName = currentLang === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); }
+                if(isStatic) { 
+                    stopName = getTranslation(stop.name_key, stop.name_key); 
+                } else {
+                    // 🚨 改良渲染邏輯：確保 name_obj 入面真係有 tc 先用
+                    if (stop.name_obj && stop.name_obj['tc']) { 
+                        stopName = stop.name_obj[currentLang] || stop.name_obj['tc']; 
+                    }
+                    else if (stop.name_tc || stop.name_en) { 
+                        stopName = currentLang === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); 
+                    }
                     else if (stop.stop_name && typeof stop.stop_name === 'string') { stopName = stop.stop_name; }
-                    else { stopName = stop.name_key || stop.stop_id || `分站 ${index + 1}`; }
+                    else if (stop.name) { stopName = stop.name; }
+                    else { stopName = stop.name_key || stop.stop_id || stop.stop || `分站 ${index + 1}`; }
                 }
                 const opt = document.createElement('option');
-                opt.value = JSON.stringify(stop); opt.textContent = stopName; select.appendChild(opt);
+                opt.value = JSON.stringify(stop); 
+                opt.textContent = stopName; 
+                select.appendChild(opt);
             });
         }
 
