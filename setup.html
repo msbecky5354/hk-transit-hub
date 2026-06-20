@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="setupTitle">貼地通 - 設定中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="lang.js"></script>
-    <script src="config.js"></script> 
+    <script src="lang.js?v=11"></script>
+    <script src="config.js?v=11"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=4"></script>
-    <script src="api-kmb.js?v=4"></script>
-    
+    <script src="data-static.js?v=11"></script>
+    <script src="api-kmb.js?v=11"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
@@ -22,12 +20,8 @@
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
-
     <div id="app-header"></div>
-
     <main class="max-w-lg mx-auto mt-6 px-4">
-        
-        <!-- 第一步：群組設定 -->
         <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group">第一步：設定群組</h2>
             <div class="flex flex-col gap-3">
@@ -38,11 +32,8 @@
             </div>
         </div>
 
-       <!-- 第二步：類別選擇與搜尋 -->
        <div id="step2-area" class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100 hidden-step transition-all">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step2Select">第二步：選擇交通工具類別</h2>
-            
-            <!-- 🌟 升級：3 欄 x 2 行，完美展示 6 大交通工具 -->
             <div class="grid grid-cols-3 gap-2 mb-4" id="transit-selector">
                 <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
                     <span class="text-lg">🚌</span><span data-i18n="transitBUS">巴士</span>
@@ -55,9 +46,6 @@
                 </button>
                 <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
                     <span class="text-lg">🚊</span><span data-i18n="transitLRT">輕鐵</span>
-                </button>
-                <button onclick="selectTransit('TRAM')" id="pill-TRAM" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">🚋</span><span data-i18n="transitTRAM">電車</span>
                 </button>
                 <button onclick="selectTransit('FERRY')" id="pill-FERRY" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
                     <span class="text-lg">⛴️</span><span data-i18n="transitFERRY">渡輪</span>
@@ -86,18 +74,15 @@
             </div>
         </div>
 
-        <!-- 第三步：個人化儲存 -->
         <div id="setup-area" class="bg-white rounded-xl shadow-sm p-5 border border-red-100 hidden-step transition-all">
             <h2 class="text-sm font-bold text-red-500 mb-4 uppercase tracking-wider flex items-center gap-2">
                 <span>✨</span> <span data-i18n="step4Save">第三步：個人化與儲存</span>
             </h2>
-            
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
                     <input type="text" id="alias-input" class="w-full border rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none bg-gray-50">
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel">顏色標籤</label>
                     <div class="flex gap-3 mt-2" id="color-picker">
@@ -107,23 +92,16 @@
                         <div class="color-dot bg-purple-500" data-color="purple" onclick="selectColor(this)"></div>
                     </div>
                 </div>
-
                 <button onclick="saveToDashboard()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-lg mt-4 shadow-md hover:bg-gray-800 transition flex justify-center items-center gap-2">
                     ✅ <span data-i18n="saveBtn">新增至儀表板</span>
                 </button>
             </div>
         </div>
     </main>
-
     <div id="app-footer"></div>
-
     <script>
-        window.selectedGroup = "";
-        window.selectedTransit = "BUS"; 
-        window.currentTransit = "";
-        window.currentRouteData = null; 
-        window.activeDirection = '';
-        window.selectedColor = 'red';
+        window.selectedGroup = ""; window.selectedTransit = "BUS"; window.currentTransit = "";
+        window.currentRouteData = null; window.activeDirection = ''; window.selectedColor = 'red';
 
         window.onload = () => {
             if (typeof renderHeader === "function") renderHeader();
@@ -136,17 +114,7 @@
             let routes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
             let existingGroups = [...new Set(routes.map(r => r.group))];
             const defaultGroups = ["groupHome", "groupWork"];
-            
-            let needSave = false;
-            routes = routes.map(r => {
-                if (r.group === "🏠 屋企落樓" || r.group === "🏠 屋企落楼" || r.group === "🏠 Home") { r.group = "groupHome"; needSave = true; }
-                if (r.group === "💼 返工轉車" || r.group === "💼 返工转车" || r.group === "💼 Commute") { r.group = "groupWork"; needSave = true; }
-                return r;
-            });
-            if (needSave) localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
-
-            let allGroups = [...new Set([...defaultGroups, ...existingGroups.filter(g => g !== "🏠 屋企落樓" && g !== "🏠 屋企落楼" && g !== "🏠 Home" && g !== "💼 返工轉車" && g !== "💼 返工轉車" && g !== "💼 Commute")])];
-
+            let allGroups = [...new Set([...defaultGroups, ...existingGroups.filter(g => g !== "🏠 屋企落樓" && g !== "🏠 屋企落楼" && g !== "🏠 Home" && g !== "💼 返工轉車" && g !== "💼 返工转车" && g !== "💼 Commute")])];
             selectEl.innerHTML = '<option value="" disabled selected data-i18n="selectGroup">請選擇或建立群組...</option>';
             allGroups.forEach(group => {
                 const displayName = (group === 'groupHome' || group === 'groupWork') ? getTranslation(group, group) : group;
@@ -158,52 +126,32 @@
         function checkStep1() {
             const groupSelect = document.getElementById('group-select').value;
             const newGroupInput = document.getElementById('new-group-input');
-            
-            if (groupSelect === "NEW_GROUP") {
-                newGroupInput.classList.remove('hidden-step');
-                window.selectedGroup = newGroupInput.value.trim();
-            } else {
-                newGroupInput.classList.add('hidden-step');
-                window.selectedGroup = groupSelect;
-            }
-            
-            if (window.selectedGroup) {
-                document.getElementById('step2-area').classList.remove('hidden-step');
-            } else {
-                document.getElementById('step2-area').classList.add('hidden-step');
-            }
+            if (groupSelect === "NEW_GROUP") { newGroupInput.classList.remove('hidden-step'); window.selectedGroup = newGroupInput.value.trim(); }
+            else { newGroupInput.classList.add('hidden-step'); window.selectedGroup = groupSelect; }
+            if (window.selectedGroup) { document.getElementById('step2-area').classList.remove('hidden-step'); }
+            else { document.getElementById('step2-area').classList.add('hidden-step'); }
         }
 
         function selectTransit(type) {
             window.selectedTransit = type;
-            // 🌟 升級為 6 大交通工具陣列
-            const pills = ['BUS', 'GMB', 'MTR', 'LRT', 'TRAM', 'FERRY'];
+            const pills = ['BUS', 'GMB', 'MTR', 'LRT', 'FERRY'];
             pills.forEach(p => {
                 const element = document.getElementById(`pill-${p}`);
-                if (p === type) {
-                    element.classList.add('selected', 'bg-red-50', 'text-red-700', 'border-red-500');
-                    element.classList.remove('text-gray-500', 'bg-gray-50');
-                } else {
-                    element.classList.remove('selected', 'bg-red-50', 'text-red-700', 'border-red-500');
-                    element.classList.add('text-gray-500', 'bg-gray-50');
-                }
+                if (p === type) { element.classList.add('selected', 'bg-red-50', 'text-red-700', 'border-red-500'); element.classList.remove('text-gray-500', 'bg-gray-50'); }
+                else { element.classList.remove('selected', 'bg-red-50', 'text-red-700', 'border-red-500'); element.classList.add('text-gray-500', 'bg-gray-50'); }
             });
 
             const inputArea = document.getElementById('omni-input-area');
             const staticArea = document.getElementById('static-route-area');
             const staticSelect = document.getElementById('static-route-select');
-
             document.getElementById('stop-selection-ui').classList.add('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
 
-            // 🌟 精準過濾：各自只顯示自己嘅路線，唔再撈埋一碟
-            if (type === 'MTR' || type === 'FERRY' || type === 'LRT' || type === 'TRAM') {
+            if (['MTR', 'FERRY', 'LRT'].includes(type)) {
                 inputArea.classList.add('hidden-step');
                 staticArea.classList.remove('hidden-step');
-                
                 const placeholder = getTranslation('static_select_placeholder', '請選擇綫路 / 航線...');
                 staticSelect.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
-                
                 Object.keys(window.STATIC_DICTIONARY).forEach(key => {
                     const item = window.STATIC_DICTIONARY[key];
                     if (item.transitType === type) {
@@ -220,162 +168,97 @@
         function loadStaticRoute() {
             const staticKey = document.getElementById('static-route-select').value;
             if (!staticKey) return;
-
             const staticData = window.STATIC_DICTIONARY[staticKey];
-            window.currentRouteData = staticData;
-            window.currentTransit = staticData.transitType;
-            window.activeDirection = Object.keys(staticData.directions)[0];
-
+            window.currentRouteData = staticData; window.currentTransit = staticData.transitType; window.activeDirection = Object.keys(staticData.directions)[0];
             document.getElementById('stop-selection-ui').classList.remove('hidden-step');
-            renderDirectionTabs();
-            renderStopDropdown();
+            renderDirectionTabs(); renderStopDropdown();
         }
 
         function renderDirectionTabs() {
-            const tabsContainer = document.getElementById('direction-tabs');
-            tabsContainer.innerHTML = '';
-            
+            const container = document.getElementById('direction-tabs');
+            if (!container || !window.currentRouteData || !window.currentRouteData.directions) return;
+            container.innerHTML = '';
             const directions = window.currentRouteData.directions;
-            Object.keys(directions).forEach(dir => {
-                let destName = "";
-                if (directions[dir].dest_name) {
-                    destName = directions[dir].dest_name[currentLang] || directions[dir].dest_name['tc'];
-                } else if (directions[dir].dest_key) {
-                    destName = getTranslation(directions[dir].dest_key, dir);
-                } else {
-                    destName = getTranslation(dir, dir); 
+            const isStatic = ['MTR', 'LRT', 'FERRY'].includes(window.currentTransit);
+            Object.keys(directions).forEach(key => {
+                const dir = directions[key];
+                let destText = '';
+                if(isStatic) { destText = getTranslation(dir.dest_key, dir.dest_key); }
+                else {
+                   if (dir.dest_name && typeof dir.dest_name === 'object') { destText = dir.dest_name[currentLang] || dir.dest_name['tc'] || "未知方向"; }
+                   else if (dir.dest_name && typeof dir.dest_name === 'string') { destText = dir.dest_name; }
+                   else { destText = dir.dest_key || "未知方向"; }
                 }
-
-                const isActive = (dir === window.activeDirection);
-                const btnClass = isActive ? "flex-1 py-2 bg-white text-red-600 rounded font-bold shadow-sm text-sm truncate px-1" : "flex-1 py-2 text-gray-500 text-sm truncate px-1";
-                tabsContainer.innerHTML += `<button onclick="window.activeDirection='${dir}'; renderDirectionTabs(); renderStopDropdown();" class="${btnClass}" title="${destName}">${destName}</button>`;
+                let label = destText;
+                if (!isStatic && window.currentTransit !== 'GMB' && destText !== "未知方向") { label = currentLang === 'en' ? `To ${destText}` : `往 ${destText}`; }
+                const btn = document.createElement('button');
+                btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition ${window.activeDirection === key ? 'bg-white text-red-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`;
+                btn.textContent = label;
+                btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };
+                container.appendChild(btn);
             });
         }
 
-        async function renderStopDropdown() {
-            const selectEl = document.getElementById('stop-select');
-            const stops = window.currentRouteData.directions[window.activeDirection].stops;
-            
-            let needsTranslation = stops.some(stop => stop.stop_id && stop.stop_id.match(/^\d{6}$/) && (!stop.name_obj || !stop.name_obj.tc || stop.name_obj.tc === stop.stop_id));
-            
-            if (needsTranslation) {
-                selectEl.innerHTML = `<option value="" disabled selected>🔄 正在翻譯城巴車站名稱...</option>`;
-                
-                const fetchPromises = stops.map(async (stop) => {
-                    if (stop.stop_id && stop.stop_id.match(/^\d{6}$/) && (!stop.name_obj || !stop.name_obj.tc || stop.name_obj.tc === stop.stop_id)) {
-                        try {
-                            const res = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${stop.stop_id}`);
-                            if (res.ok) {
-                                const json = await res.json();
-                                if (json && json.data) {
-                                    stop.name_obj = { tc: json.data.name_tc, en: json.data.name_en };
-                                }
-                            }
-                        } catch(e) {
-                            console.warn("無法翻譯車站:", stop.stop_id);
-                        }
-                    }
-                });
-                
-                await Promise.all(fetchPromises);
-            }
-            
-            const placeholder = getTranslation('selectStop', '請選擇上車分站...');
-            selectEl.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
-            
-            stops.forEach(stop => {
-                let stopName = "";
-                if (stop.name_key) {
-                    stopName = getTranslation(stop.name_key, stop.stop_id);
-                } else if (stop.name_obj && stop.name_obj.tc) {
-                    stopName = stop.name_obj[currentLang] || stop.name_obj['tc'] || stop.stop_id;
-                } else {
-                    stopName = stop.stop_id;
+        function renderStopDropdown() {
+            const stopArea = document.getElementById('stop-selection-ui');
+            const select = document.getElementById('stop-select');
+            if (!stopArea || !select) return;
+            select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
+            stopArea.classList.remove('hidden-step');
+            document.getElementById('setup-area').classList.add('hidden-step');
+            if (!window.currentRouteData || !window.currentRouteData.directions || !window.activeDirection) return;
+            const dirData = window.currentRouteData.directions[window.activeDirection];
+            if (!dirData || !dirData.stops || !Array.isArray(dirData.stops)) return;
+            const isStatic = ['MTR', 'LRT', 'FERRY'].includes(window.currentTransit);
+
+            dirData.stops.forEach((stop, index) => {
+                let stopName = '';
+                if(isStatic) { stopName = getTranslation(stop.name_key, stop.name_key); }
+                else {
+                    if (stop.name_obj && typeof stop.name_obj === 'object') { stopName = stop.name_obj[currentLang] || stop.name_obj['tc'] || stop.stop_id; }
+                    else if (stop.name_obj && typeof stop.name_obj === 'string') { stopName = stop.name_obj; }
+                    else if (stop.name_tc || stop.name_en) { stopName = currentLang === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); }
+                    else if (stop.stop_name && typeof stop.stop_name === 'string') { stopName = stop.stop_name; }
+                    else { stopName = stop.name_key || stop.stop_id || `分站 ${index + 1}`; }
                 }
-                
-                const valueData = JSON.stringify({ 
-                    stop_id: stop.stop_id, 
-                    api_url: stop.api_url, 
-                    name_key: stop.name_key || null,
-                    name_obj: stop.name_obj || null
-                });
-                selectEl.innerHTML += `<option value='${valueData}'>${stopName}</option>`;
+                const opt = document.createElement('option');
+                opt.value = JSON.stringify(stop); opt.textContent = stopName; select.appendChild(opt);
             });
         }
 
         function showSetupForm() {
             document.getElementById('setup-area').classList.remove('hidden-step');
             const stopData = JSON.parse(document.getElementById('stop-select').value);
-            
             const localizedRoute = window.currentRouteData.route_key ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route;
-            
             let stopNameLocal = "";
-            if (stopData.name_key) {
-                stopNameLocal = getTranslation(stopData.name_key);
-            } else if (stopData.name_obj) {
-                stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc'];
-            }
-            
+            if (stopData.name_key) { stopNameLocal = getTranslation(stopData.name_key); }
+            else if (stopData.name_obj) { stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc']; }
             document.getElementById('alias-input').value = `${localizedRoute} (${stopNameLocal})`;
         }
 
-        function checkStep2() {
-            const selectVal = document.getElementById('stop-select').value;
-            if(selectVal) {
-                showSetupForm();
-            } else {
-                document.getElementById('setup-area').classList.add('hidden-step');
-            }
-        }
-
-        function selectColor(element) {
-            document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            window.selectedColor = element.getAttribute('data-color');
-        }
-
+        function checkStep2() { const selectVal = document.getElementById('stop-select').value; if(selectVal) { showSetupForm(); } else { document.getElementById('setup-area').classList.add('hidden-step'); } }
+        function selectColor(element) { document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected')); element.classList.add('selected'); window.selectedColor = element.getAttribute('data-color'); }
         function saveToDashboard() {
             const stopData = JSON.parse(document.getElementById('stop-select').value);
             const aliasInput = document.getElementById('alias-input').value.trim();
             const colorMap = { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#10b981', 'purple': '#8b5cf6' };
-
             const localizedRoute = window.currentRouteData.route_key ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route;
-            
             let stopNameLocal = "";
-            if (stopData.name_key) {
-                stopNameLocal = getTranslation(stopData.name_key);
-            } else if (stopData.name_obj) {
-                stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc'];
-            }
-            
+            if (stopData.name_key) { stopNameLocal = getTranslation(stopData.name_key); }
+            else if (stopData.name_obj) { stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc']; }
             const defaultAlias = `${localizedRoute} (${stopNameLocal})`;
-
             const isCustom = (aliasInput !== defaultAlias && aliasInput !== "");
             const savedAlias = isCustom ? aliasInput : "";
 
             const newRouteConfig = {
-                id: `item_${Date.now()}`,
-                group: window.selectedGroup, 
-                transitType: window.currentTransit.toUpperCase(),
-                route: window.currentRouteData.route,
-                route_key: window.currentRouteData.route_key || null,
-                stop_id: stopData.stop_id,
-                dest_key: window.currentRouteData.directions[window.activeDirection].dest_key || null, 
-                dest_name: window.currentRouteData.directions[window.activeDirection].dest_name || null,
-                stop_key: stopData.name_key || null, 
-                stop_name: stopData.name_obj || null,
-                alias: savedAlias, 
-                isCustomAlias: isCustom,
-                color: colorMap[window.selectedColor] || '#ef4444',
-                apiUrl: stopData.api_url,
-                time: 'ALL_DAY' 
+                id: `item_${Date.now()}`, group: window.selectedGroup, transitType: window.currentTransit.toUpperCase(), route: window.currentRouteData.route,
+                route_key: window.currentRouteData.route_key || null, stop_id: stopData.stop_id,
+                dest_key: window.currentRouteData.directions[window.activeDirection].dest_key || null, dest_name: window.currentRouteData.directions[window.activeDirection].dest_name || null,
+                stop_key: stopData.name_key || null, stop_name: stopData.name_obj || null, alias: savedAlias, isCustomAlias: isCustom,
+                color: colorMap[window.selectedColor] || '#ef4444', apiUrl: stopData.api_url, time: 'ALL_DAY'
             };
-
             let dashboardRoutes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
-            dashboardRoutes.push(newRouteConfig);
-            localStorage.setItem('hk_transit_routes', JSON.stringify(dashboardRoutes));
-
-            alert(`✅ 成功保存路線！`);
+            dashboardRoutes.push(newRouteConfig); localStorage.setItem('hk_transit_routes', JSON.stringify(dashboardRoutes));
             window.location.href = 'index.html'; 
         }
     </script>
