@@ -6,12 +6,11 @@
     <title data-i18n="appName">貼地通 - 儀表板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="lang.js?v=6"></script>
-    <script src="config.js?v=6"></script>
+    <script src="lang.js?v=12"></script>
+    <script src="config.js?v=12"></script>
     <script src="header.js"></script>
     <script src="footer.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         body { overscroll-behavior-y: none; }
         .swipe-container { position: relative; overflow: hidden; border-radius: 0.5rem; margin-bottom: 0.75rem; }
@@ -26,9 +25,7 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col font-sans pb-24">
-
     <div id="app-header"></div>
-
     <main id="dashboard-container" class="flex-1 p-4 overflow-y-auto space-y-6">
         <div id="empty-state" class="hidden flex flex-col items-center justify-center h-64 text-gray-400">
             <i class="fas fa-route text-4xl mb-3 text-gray-300"></i>
@@ -36,26 +33,28 @@
             <button onclick="window.location.href='setup.html'" class="mt-4 bg-red-600 text-white px-6 py-2 rounded-full shadow-md font-bold" data-i18n="goToSetupBtn">+ 新增路線</button>
         </div>
     </main>
-
     <div id="app-footer"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
-            autoHealRoutes(); // 🛡️ 啟動自癒引擎
+            autoHealRoutes();
             initDashboard();
-            checkImportParameter();
         });
 
-        // 🛡️ 智能自癒引擎：修復舊版 LocalStorage 中被污染的 MTR 連結
         function autoHealRoutes() {
             let routesStr = localStorage.getItem('hk_transit_routes');
             if (!routesStr) return;
             let routes = JSON.parse(routesStr);
             let changed = false;
             
-            routes.forEach(r => {
+            let filteredRoutes = routes.filter(r => {
+                if (r.transitType === 'TRAM') { changed = true; return false; }
+                return true;
+            });
+
+            filteredRoutes.forEach(r => {
                 if (r.transitType === 'MTR' && r.apiUrl && (r.apiUrl.includes('-OUTBOUND') || r.apiUrl.includes('-INBOUND'))) {
                     try {
                         let urlObj = new URL(r.apiUrl);
@@ -71,14 +70,11 @@
                             r.apiUrl = urlObj.toString();
                             changed = true;
                         }
-                    } catch(e) { console.warn("Auto-heal failed for:", r.apiUrl); }
+                    } catch(e) {}
                 }
             });
             
-            if (changed) {
-                localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
-                console.log("🛠️ 貼地通自癒引擎：已成功修復損壞的港鐵 API 連結！");
-            }
+            if (changed) { localStorage.setItem('hk_transit_routes', JSON.stringify(filteredRoutes)); }
         }
 
         function getTranslation(key, defaultText) {
@@ -89,7 +85,6 @@
             let routesStr = localStorage.getItem('hk_transit_routes');
             let routes = [];
             if (!routesStr) return [];
-            
             routes = JSON.parse(routesStr);
             let needSave = false;
             routes = routes.map(r => {
@@ -101,9 +96,7 @@
             return routes;
         }
 
-        function saveRoutes(routes) {
-            localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
-        }
+        function saveRoutes(routes) { localStorage.setItem('hk_transit_routes', JSON.stringify(routes)); }
 
         function getTransitDisplayHtml(transitType) {
             const iconMap = {
@@ -112,14 +105,13 @@
                 'CTB': '<i class="fas fa-bus text-yellow-500 mr-1"></i>',
                 'MTR': '<i class="fas fa-subway text-teal-600 mr-1"></i>',
                 'LRT': '<i class="fas fa-train-tram text-orange-500 mr-1"></i>',
-                'TRAM': '<i class="fas fa-train text-green-600 mr-1"></i>',
                 'FERRY': '<i class="fas fa-ship text-blue-600 mr-1"></i>',
                 'NLB': '<i class="fas fa-bus-simple text-blue-500 mr-1"></i>',
                 'GMB': '<i class="fas fa-van-shuttle text-green-500 mr-1"></i>'
             };
             const langKeyMap = {
                 'KMB': 'transitKMB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB',
-                'MTR': 'transitMTR', 'LRT': 'transitLRT', 'TRAM': 'transitTRAM',
+                'MTR': 'transitMTR', 'LRT': 'transitLRT',
                 'FERRY': 'transitFERRY', 'NLB': 'transitNLB', 'GMB': 'transitGMB'
             };
             const icon = iconMap[transitType] || '<i class="fas fa-route mr-1"></i>';
@@ -130,18 +122,9 @@
         function initDashboard() {
             const container = document.getElementById('dashboard-container');
             const emptyState = document.getElementById('empty-state');
-            const allRoutes = getRoutes();
-
-            const currentHour = new Date().getHours();
-            let currentPeriod = (currentHour >= 5 && currentHour < 12) ? 'MORNING' : 'AFTERNOON';
-
-            const filteredRoutes = allRoutes.filter(route => {
-                if (route.time === 'ALL_DAY' || !route.time) return true;
-                return route.time === currentPeriod;
-            });
+            const filteredRoutes = getRoutes(); 
 
             container.innerHTML = '';
-
             if (filteredRoutes.length === 0) {
                 container.appendChild(emptyState);
                 emptyState.classList.remove('hidden');
@@ -167,47 +150,33 @@
             sortedGroupNames.forEach(groupName => {
                 const routes = grouped[groupName];
                 const displayGroupName = (groupName === 'groupWork' || groupName === 'groupHome') ? getTranslation(groupName, groupName) : groupName;
-                
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'group-block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100';
                 groupDiv.dataset.groupName = groupName;
-                
                 groupDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-50">
                         <h2 class="group-title text-md font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">
                             <span>☰</span> <span>${displayGroupName}</span>
                         </h2>
-                        <button onclick="shareGroup('${groupName}')" class="text-blue-500 hover:text-blue-700 text-xs font-bold flex items-center gap-1 transition">
-                            <i class="fas fa-share-nodes"></i> <span data-i18n="navShare">分享群組</span>
-                        </button>
                     </div>
                 `;
-                
                 const listDiv = document.createElement('div');
                 listDiv.className = 'sortable-list space-y-3';
                 listDiv.dataset.group = groupName;
 
-                routes.forEach(route => {
-                    const card = createRouteCard(route);
-                    listDiv.appendChild(card);
-                });
+                routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
 
                 groupDiv.appendChild(listDiv);
                 container.appendChild(groupDiv);
 
                 new Sortable(listDiv, {
-                    handle: '.drag-handle',
-                    animation: 150,
-                    ghostClass: 'sortable-ghost',
+                    handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
                     onEnd: function () { updateSorting(); }
                 });
             });
 
             new Sortable(container, {
-                draggable: '.group-block',
-                handle: '.group-title',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
+                draggable: '.group-block', handle: '.group-title', animation: 150, ghostClass: 'sortable-ghost',
                 onEnd: function () { updateGroupSorting(); }
             });
 
@@ -239,8 +208,6 @@
                 
                 if (route.transitType === 'FERRY') {
                     cardTitle = `${routeName} (${stopName})`;
-                } else if (route.transitType === 'TRAM') {
-                    cardTitle = `${routeName} ${destName} (${stopName})`;
                 } else if (route.transitType === 'GMB') {
                     cardTitle = destName ? `${destName} (${stopName})` : `${routeName} (${stopName})`;
                 } else {
@@ -300,43 +267,25 @@
         function initSwipeToDelete() {
             const containers = document.querySelectorAll('.swipe-container');
             const threshold = Math.max(-window.innerWidth * 0.2, -80); 
-
             containers.forEach(container => {
                 const content = container.querySelector('.swipe-content');
                 let startX = 0, currentX = 0, isDragging = false;
-
                 content.addEventListener('pointerdown', (e) => {
                     if (e.target.closest('.drag-handle') || e.target.closest('.swipe-actions')) return;
-                    isDragging = true;
-                    startX = e.clientX;
-                    content.style.transition = 'none'; 
-                    content.setPointerCapture(e.pointerId);
+                    isDragging = true; startX = e.clientX; content.style.transition = 'none'; content.setPointerCapture(e.pointerId);
                 });
-
                 content.addEventListener('pointermove', (e) => {
                     if (!isDragging) return;
                     const deltaX = e.clientX - startX;
-                    if (deltaX < 0 && deltaX > -150) {
-                        currentX = deltaX;
-                        content.style.transform = `translateX(${currentX}px)`;
-                    }
+                    if (deltaX < 0 && deltaX > -150) { currentX = deltaX; content.style.transform = `translateX(${currentX}px)`; }
                 });
-
                 const endDrag = (e) => {
                     if (!isDragging) return;
-                    isDragging = false;
-                    content.style.transition = 'transform 0.2s ease-out';
-                    content.releasePointerCapture(e.pointerId);
-                    
-                    if (currentX < threshold) {
-                        content.style.transform = `translateX(-100%)`; 
-                        setTimeout(() => deleteRoute(container.dataset.id), 200);
-                    } else {
-                        content.style.transform = 'translateX(0)';
-                    }
+                    isDragging = false; content.style.transition = 'transform 0.2s ease-out'; content.releasePointerCapture(e.pointerId);
+                    if (currentX < threshold) { content.style.transform = `translateX(-100%)`; setTimeout(() => deleteRoute(container.dataset.id), 200); }
+                    else { content.style.transform = 'translateX(0)'; }
                     currentX = 0;
                 };
-
                 content.addEventListener('pointerup', endDrag);
                 content.addEventListener('pointercancel', endDrag);
             });
@@ -345,29 +294,22 @@
         async function fetchAllETAs() {
             const routes = getRoutes();
             const now = Date.now();
-            
             routes.forEach(async (route) => {
                 if (!route.apiUrl || route.apiUrl === '#') return;
-                
                 const display = document.getElementById(`eta-display-${route.id}`);
                 let etas = [];
                 let directSuccess = false;
-                
-                const canDirectFetch = (route.transitType !== 'FERRY' && route.transitType !== 'TRAM');
-
-                if (canDirectFetch) {
-                    try {
-                        const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
-                        if (response.ok) {
-                            const text = await response.text();
-                            if (text && text.trim().length > 0) {
-                                const json = JSON.parse(text);
-                                etas = parseRawTrafficJson(route.transitType, json, route.apiUrl, now);
-                                directSuccess = true;
-                            }
+                try {
+                    const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.trim().length > 0) {
+                            const json = JSON.parse(text);
+                            etas = parseRawTrafficJson(route.transitType, json, route.apiUrl, now);
+                            directSuccess = true;
                         }
-                    } catch (directError) { console.warn(`Direct fetch failed for ${route.route}`); }
-                }
+                    }
+                } catch (directError) {}
 
                 if (!directSuccess) {
                     try {
@@ -377,7 +319,7 @@
                             const json = await response.json();
                             etas = parseRawTrafficJson(route.transitType, json, route.apiUrl, now);
                         }
-                    } catch (bffError) { console.error(`BFF Fallback failed:`, bffError); }
+                    } catch (bffError) {}
                 }
 
                 if (display) {
@@ -402,76 +344,60 @@
             try {
                 if (transitType === 'KMB' || transitType === 'CITYBUS' || transitType === 'CTB') {
                     if (json.data && Array.isArray(json.data)) {
-                        etas = json.data.filter(item => item.eta).map(item => {
-                            const diff = Math.floor((new Date(item.eta).getTime() - now) / 60000);
-                            return diff < 0 ? 0 : diff;
-                        });
+                        etas = json.data.filter(item => item.eta).map(item => { return Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)); });
                     }
                 } else if (transitType === 'MTR') {
                     const urlObj = new URL(apiUrl);
-                    const line = urlObj.searchParams.get('line');
-                    const sta = urlObj.searchParams.get('sta');
-                    const dir = urlObj.searchParams.get('dir'); 
+                    const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta');
                     const mtrKey = `${line}-${sta}`;
-                    
                     if (json.data && json.data[mtrKey] && json.data[mtrKey][dir]) {
-                        etas = json.data[mtrKey][dir].filter(t => t.time).map(t => {
-                            const safeTimeStr = t.time.replace(/-/g, '/');
-                            const diff = Math.floor((new Date(safeTimeStr).getTime() - now) / 60000);
-                            return diff < 0 ? 0 : diff;
-                        });
-                    }
-                } else if (transitType === 'TRAM') {
-                    if (json.eta_list && json.eta_list.length > 0) {
-                        etas = json.eta_list.map(r => {
-                            const min = parseInt(r.eta);
-                            return isNaN(min) ? 0 : min;
-                        });
+                        etas = json.data[mtrKey][dir].filter(t => t.time).map(t => { return Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - now) / 60000)); });
                     }
                 } else if (transitType === 'FERRY') {
-                    let list = json.data || json.route_list || json;
-                    if (Array.isArray(list)) {
-                        etas = list.map(item => {
-                            let timeStr = item.eta || item.time || item.departure_time;
-                            if (timeStr) {
-                                let diff = Math.floor((new Date(timeStr.replace(/-/g, '/')).getTime() - now) / 60000);
-                                return diff < 0 ? 0 : diff;
+                    let etasRaw = [];
+                    if (json.data && json.data.route_list && Array.isArray(json.data.route_list)) {
+                        json.data.route_list.forEach(route => {
+                            if (route.stop_list && Array.isArray(route.stop_list)) {
+                                route.stop_list.forEach(stop => {
+                                    if (stop.departure_time) etasRaw.push(stop.departure_time);
+                                    else if (stop.eta) etasRaw.push(stop.eta);
+                                });
                             }
-                            return null;
-                        }).filter(e => e !== null);
-                    }
-                } else if (transitType === 'NLB') {
-                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
-                        etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => {
-                            const safeTimeStr = t.estimatedArrivalTime.replace(/-/g, '/');
-                            const diff = Math.floor((new Date(safeTimeStr).getTime() - now) / 60000);
-                            return diff < 0 ? 0 : diff;
                         });
                     }
-                } else if (transitType === 'GMB') {
-                    if (json.data && json.data.length > 0) {
-                        const firstRoute = json.data[0];
-                        if (firstRoute.eta && Array.isArray(firstRoute.eta)) {
-                            etas = firstRoute.eta.filter(e => e.diff !== undefined).map(e => e.diff);
+                    let flatList = json.data || json;
+                    if (Array.isArray(flatList)) {
+                        flatList.forEach(item => {
+                            let timeStr = item.ETA || item.eta || item.time || item.departure_time;
+                            if (timeStr) etasRaw.push(timeStr);
+                        });
+                    }
+                    etas = etasRaw.map(timeStr => {
+                        let safeTimeStr = timeStr.replace(/-/g, '/');
+                        if (/^\d{2}:\d{2}(:\d{2})?$/.test(safeTimeStr)) {
+                            const today = new Date(now);
+                            const datePrefix = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
+                            safeTimeStr = `${datePrefix} ${safeTimeStr}`;
                         }
+                        return Math.floor((new Date(safeTimeStr).getTime() - now) / 60000);
+                    }).filter(e => !isNaN(e) && e >= 0);
+                } else if (transitType === 'NLB') {
+                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
+                        etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => { return Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)); });
+                    }
+                } else if (transitType === 'GMB') {
+                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
+                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
                     }
                 } else if (transitType === 'LRT') {
                     if (json.platform_list && json.platform_list.length > 0) {
-                        const routes = json.platform_list[0].route_list || [];
-                        etas = routes.map(r => {
-                            const min = parseInt(r.stop_time);
-                            return isNaN(min) ? 0 : min;
-                        });
+                        etas = (json.platform_list[0].route_list || []).map(r => { const min = parseInt(r.stop_time); return isNaN(min) ? 0 : min; });
                     }
                 }
-            } catch (err) { console.error("Local parsing error:", err); }
+            } catch (err) {}
             return etas;
         }
-        
         setInterval(fetchAllETAs, 30000);
-        function shareDashboard() { /*...*/ }
-        function shareGroup(groupName) { /*...*/ }
-        function checkImportParameter() { /*...*/ }
     </script>
 </body>
 </html>
