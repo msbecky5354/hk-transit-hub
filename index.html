@@ -6,8 +6,8 @@
     <title data-i18n="appName">貼地通 - 儀表板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="lang.js?v=14"></script>
-    <script src="config.js?v=14"></script>
+    <script src="lang.js?v=15"></script>
+    <script src="config.js?v=15"></script>
     <script src="header.js"></script>
     <script src="footer.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,14 +18,16 @@
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         .drag-handle { cursor: grab; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; }
+        .group-title-handle { cursor: grab; }
+        .group-title-handle:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; border: 2px dashed #cbd5e1; }
         .group-block { transition: all 0.2s; }
-        .group-title { cursor: grab; }
-        .group-title:active { cursor: grabbing; }
+        .hidden-step { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col font-sans pb-24">
     <div id="app-header"></div>
+    
     <main id="dashboard-container" class="flex-1 p-4 overflow-y-auto space-y-6">
         <div id="empty-state" class="hidden flex flex-col items-center justify-center h-64 text-gray-400">
             <i class="fas fa-route text-4xl mb-3 text-gray-300"></i>
@@ -33,16 +35,109 @@
             <button onclick="window.location.href='setup.html'" class="mt-4 bg-red-600 text-white px-6 py-2 rounded-full shadow-md font-bold" data-i18n="goToSetupBtn">+ 新增路線</button>
         </div>
     </main>
+
     <div id="app-footer"></div>
+
+    <!-- 編輯花名專用 Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
+        <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-gray-800" data-i18n="editRouteTitle">✏️ 編輯路線花名</h3>
+            <label class="block text-sm font-medium text-gray-600 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
+            <input type="text" id="edit-alias-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-5 focus:border-red-500 focus:outline-none transition">
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition" data-i18n="cancelBtn">取消</button>
+                <button onclick="saveEdit()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition" data-i18n="saveBtn">儲存</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
+            
+            // 🚨 Deep Link 攔截器 (家庭共享匯入)
+            checkImportDeepLink();
+            
             autoHealRoutes();
             initDashboard();
         });
 
+        // ==========================================
+        // 模塊 1：家庭共享與匯入系統 (Deep Link)
+        // ==========================================
+        function shareGroup(groupName) {
+            const routes = getRoutes().filter(r => r.group === groupName);
+            if (routes.length === 0) return;
+            
+            // 重新賦予 ID 防止同機匯入撞 ID
+            const exportData = routes.map(r => ({ ...r, id: 'item_' + Date.now() + Math.floor(Math.random() * 1000) }));
+            const base64Str = btoa(encodeURIComponent(JSON.stringify(exportData)));
+            const link = window.location.origin + window.location.pathname + '?import=' + base64Str;
+            const shareTitle = getTranslation('appName', '貼地通') + ' - ' + getTranslation(groupName, groupName);
+
+            if (navigator.share) {
+                navigator.share({ title: shareTitle, text: `快啲加入我嘅出門儀表板【${getTranslation(groupName, groupName)}】！\n\n`, url: link }).catch(console.error);
+            } else {
+                prompt(getTranslation('copyShareLink', '請複製以下連結分享給家人：'), link);
+            }
+        }
+
+        function checkImportDeepLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const importData = urlParams.get('import');
+            if (importData) {
+                try {
+                    const newRoutes = JSON.parse(decodeURIComponent(atob(importData)));
+                    if (Array.isArray(newRoutes) && newRoutes.length > 0) {
+                        let routes = getRoutes();
+                        routes = routes.concat(newRoutes);
+                        saveRoutes(routes);
+                        alert(getTranslation('importSuccess', '🎉 成功匯入群組路線！'));
+                    }
+                } catch (e) {
+                    alert(getTranslation('importFail', '❌ 匯入失敗，連結可能無效或已損壞。'));
+                }
+                // 清洗 URL，移除 import 參數，保持畫面乾淨
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // ==========================================
+        // 模塊 2：編輯功能 (Edit Modal)
+        // ==========================================
+        let currentEditId = null;
+        function openEditModal(id) {
+            const route = getRoutes().find(r => r.id === id);
+            if (!route) return;
+            currentEditId = id;
+            document.getElementById('edit-alias-input').value = route.alias || '';
+            const modal = document.getElementById('edit-modal');
+            modal.classList.remove('hidden-step');
+            // 替換 i18n 文字以策安全
+            if (typeof translatePage === "function") translatePage();
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden-step');
+        }
+
+        function saveEdit() {
+            const newAlias = document.getElementById('edit-alias-input').value.trim();
+            let routes = getRoutes();
+            let routeIndex = routes.findIndex(r => r.id === currentEditId);
+            if (routeIndex !== -1) {
+                routes[routeIndex].alias = newAlias;
+                routes[routeIndex].isCustomAlias = newAlias !== "";
+                saveRoutes(routes);
+                initDashboard();
+            }
+            closeEditModal();
+        }
+
+        // ==========================================
+        // 模塊 3：儀表板與卡片渲染
+        // ==========================================
         function autoHealRoutes() {
             let routesStr = localStorage.getItem('hk_transit_routes');
             if (!routesStr) return;
@@ -72,8 +167,15 @@
                         }
                     } catch(e) {}
                 }
+                if (r.apiUrl && typeof r.apiUrl === 'string') {
+                    const urlLower = r.apiUrl.toLowerCase();
+                    let correctType = r.transitType;
+                    if (urlLower.includes('kmb') || urlLower.includes('etabus')) correctType = 'KMB';
+                    else if (urlLower.includes('citybus') || urlLower.includes('ctb')) correctType = 'CTB';
+                    else if (urlLower.includes('nlb')) correctType = 'NLB';
+                    if (correctType !== r.transitType) { r.transitType = correctType; changed = true; }
+                }
             });
-            
             if (changed) { localStorage.setItem('hk_transit_routes', JSON.stringify(filteredRoutes)); }
         }
 
@@ -103,19 +205,22 @@
                 'KMB': '<i class="fas fa-bus text-red-500 mr-1"></i>',
                 'CITYBUS': '<i class="fas fa-bus text-yellow-500 mr-1"></i>',
                 'CTB': '<i class="fas fa-bus text-yellow-500 mr-1"></i>',
-                'MTR': '<i class="fas fa-subway text-teal-600 mr-1"></i>',
+                'NLB': '<i class="fas fa-bus-simple text-blue-500 mr-1"></i>',
+                'MTR': '<img src="MTR.png" alt="MTR" class="inline-block w-6 h-6 mr-1 align-middle object-contain transform scale-125 -my-1">', 
                 'LRT': '<i class="fas fa-train-tram text-orange-500 mr-1"></i>',
                 'FERRY': '<i class="fas fa-ship text-blue-600 mr-1"></i>',
-                'NLB': '<i class="fas fa-bus-simple text-blue-500 mr-1"></i>',
-                'GMB': '<i class="fas fa-van-shuttle text-green-500 mr-1"></i>'
+                'GMB': '<i class="fas fa-van-shuttle text-green-500 mr-1"></i>',
+                'BUS': '<i class="fas fa-bus text-gray-500 mr-1"></i>'
             };
             const langKeyMap = {
                 'KMB': 'transitKMB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB',
                 'MTR': 'transitMTR', 'LRT': 'transitLRT',
-                'FERRY': 'transitFERRY', 'NLB': 'transitNLB', 'GMB': 'transitGMB'
+                'FERRY': 'transitFERRY', 'NLB': 'transitNLB', 'GMB': 'transitGMB',
+                'BUS': 'transitBUS'
             };
-            const icon = iconMap[transitType] || '<i class="fas fa-route mr-1"></i>';
-            const localizedName = getTranslation(langKeyMap[transitType], transitType);
+            const safeType = transitType ? transitType.toUpperCase() : 'BUS';
+            const icon = iconMap[safeType] || '<i class="fas fa-route mr-1"></i>';
+            const localizedName = getTranslation(langKeyMap[safeType], safeType);
             return `${icon}${localizedName}`;
         }
 
@@ -153,11 +258,16 @@
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'group-block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100';
                 groupDiv.dataset.groupName = groupName;
+                
+                // ✅ 標題列加入拖曳手柄 (fa-grip-vertical) 同埋 分享按鈕 (fa-share-nodes)
                 groupDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-50">
-                        <h2 class="group-title text-md font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">
-                            <span>☰</span> <span>${displayGroupName}</span>
+                        <h2 class="group-title-handle text-md font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 hover:text-red-500 transition">
+                            <i class="fas fa-grip-vertical text-gray-300"></i> <span>${displayGroupName}</span>
                         </h2>
+                        <button onclick="shareGroup('${groupName}')" class="text-gray-400 hover:text-blue-500 transition px-2 py-1 bg-blue-50 rounded-md">
+                            <i class="fas fa-share-nodes"></i> <span class="text-xs ml-1 font-bold">分享</span>
+                        </button>
                     </div>
                 `;
                 const listDiv = document.createElement('div');
@@ -169,14 +279,16 @@
                 groupDiv.appendChild(listDiv);
                 container.appendChild(groupDiv);
 
+                // 卡片層級拖曳
                 new Sortable(listDiv, {
                     handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
                     onEnd: function () { updateSorting(); }
                 });
             });
 
+            // 群組層級拖曳
             new Sortable(container, {
-                draggable: '.group-block', handle: '.group-title', animation: 150, ghostClass: 'sortable-ghost',
+                draggable: '.group-block', handle: '.group-title-handle', animation: 150, ghostClass: 'sortable-ghost',
                 onEnd: function () { updateGroupSorting(); }
             });
 
@@ -191,7 +303,6 @@
             wrapper.dataset.id = route.id;
             const loadingText = getTranslation('loading', '載入中...');
             
-            // 1. 獲取站名同原始終點名
             const getDynamicName = (nameObj) => {
                 if (!nameObj) return '';
                 if (typeof nameObj === 'string') return nameObj;
@@ -200,57 +311,50 @@
             const stopName = route.stop_key ? getTranslation(route.stop_key) : getDynamicName(route.stop_name);
             const rawDestName = route.dest_key ? getTranslation(route.dest_key) : getDynamicName(route.dest_name);
             
-            // 2. 智能清洗終點站名 (切走政府 API 冗餘字眼如 "[城巴] A21 往")
             let cleanDestName = rawDestName;
-            if (cleanDestName.includes('往 ')) {
-                cleanDestName = cleanDestName.split('往 ').pop().trim();
-            } else if (cleanDestName.toLowerCase().includes(' to ')) {
-                cleanDestName = cleanDestName.split(/ to /i).pop().trim();
-            }
+            if (cleanDestName.includes('往 ')) cleanDestName = cleanDestName.split('往 ').pop().trim();
+            else if (cleanDestName.toLowerCase().includes(' to ')) cleanDestName = cleanDestName.split(/ to /i).pop().trim();
             
-            // 3. 完美組裝「上車站名 往 方向」
             const toWord = currentLang === 'en' ? ' To ' : ' 往 ';
             const directionStr = cleanDestName ? `${stopName}${toWord}${cleanDestName}` : stopName;
 
-            // 4. 處理「自訂花名 (Alias)」嘅雙層顯示
             let mainTitle = directionStr;
             let subTitleHtml = '';
             
             if (route.isCustomAlias && route.alias && route.alias.trim() !== '') {
-                // 如果有花名：主標題顯示花名，副標題顯示「站名 往 方向」
                 mainTitle = route.alias; 
                 subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`;
             }
-            
             if (!mainTitle) mainTitle = route.route || "Transit Route";
 
-            // 5. 左側精簡 Badge 處理 (解決被擠壓出 ... 嘅痛點)
             let shortRouteName = route.route || '';
             if (route.transitType === 'LRT' && shortRouteName.startsWith('LRT-')) shortRouteName = shortRouteName.replace('LRT-', '');
             if (route.transitType === 'FERRY' && shortRouteName.startsWith('FERRY-')) shortRouteName = shortRouteName.replace('FERRY-', '');
             if (route.transitType === 'MTR') {
-                const mtrShort = {
-                   'TML': currentLang==='en'?'TML':'屯馬', 'TCL': currentLang==='en'?'TCL':'東涌',
-                   'KTL': currentLang==='en'?'KTL':'觀塘', 'TWL': currentLang==='en'?'TWL':'荃灣',
-                   'ISL': currentLang==='en'?'ISL':'港島', 'EAL': currentLang==='en'?'EAL':'東鐵',
-                   'SIL': currentLang==='en'?'SIL':'南港', 'TKL': currentLang==='en'?'TKL':'將軍澳',
-                   'AEL': currentLang==='en'?'AEL':'機快', 'DRL': currentLang==='en'?'DRL':'迪士尼'
-                };
+                const mtrShort = { 'TML': currentLang==='en'?'TML':'屯馬', 'TCL': currentLang==='en'?'TCL':'東涌', 'KTL': currentLang==='en'?'KTL':'觀塘', 'TWL': currentLang==='en'?'TWL':'荃灣', 'ISL': currentLang==='en'?'ISL':'港島', 'EAL': currentLang==='en'?'EAL':'東鐵', 'SIL': currentLang==='en'?'SIL':'南港', 'TKL': currentLang==='en'?'TKL':'將軍澳', 'AEL': currentLang==='en'?'AEL':'機快', 'DRL': currentLang==='en'?'DRL':'迪士尼' };
                 shortRouteName = mtrShort[shortRouteName] || shortRouteName;
             }
 
             const transitDisplay = getTransitDisplayHtml(route.transitType);
+            let badgeHtml = '';
+            if (route.transitType === 'MTR' || route.transitType === 'LRT') {
+                let bigIcon = route.transitType === 'MTR' ? '<img src="MTR.png" alt="MTR" class="w-10 h-10 object-contain mb-1" style="transform: scale(1.8);">' : '<i class="fas fa-train-tram text-orange-500 text-3xl mb-1"></i>'; 
+                const typeName = getTranslation(route.transitType === 'MTR' ? 'transitMTR' : 'transitLRT', route.transitType);
+                badgeHtml = `<div class="flex flex-col items-center justify-center w-full mt-1">${bigIcon}<span class="text-[10px] text-gray-500 font-bold whitespace-nowrap mt-1">${typeName}</span></div>`;
+            } else {
+                badgeHtml = `<span class="text-[9px] text-gray-400 font-bold mb-1 flex items-center justify-center whitespace-nowrap">${transitDisplay}</span><span class="text-base font-black text-gray-800 truncate max-w-full">${shortRouteName}</span>`;
+            }
 
+            // ✅ 加入側邊欄工具 (編輯按鈕 + 拖曳按鈕)
             wrapper.innerHTML = `
                 <div class="swipe-actions cursor-pointer hover:bg-red-700 transition" onclick="deleteRoute('${route.id}')">
                     <i class="fas fa-trash-alt text-xl"></i>
                 </div>
-                <div class="swipe-content border-l-4 bg-white flex items-center p-4 rounded-r-lg" style="border-color: ${route.color}">
-                    <div class="w-16 flex flex-col items-center justify-center border-r border-gray-100 pr-3 mr-3 text-center shrink-0">
-                        <span class="text-[9px] text-gray-400 font-bold mb-1 flex items-center justify-center whitespace-nowrap">${transitDisplay}</span>
-                        <span class="text-base font-black text-gray-800 truncate max-w-full">${shortRouteName}</span>
+                <div class="swipe-content border-l-4 bg-white flex items-stretch p-0 rounded-r-lg" style="border-color: ${route.color}">
+                    <div class="w-16 flex flex-col items-center justify-center border-r border-gray-50 pr-2 mr-3 my-4 ml-3 text-center shrink-0 min-h-[44px]">
+                        ${badgeHtml}
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 py-4">
                         <h3 class="text-sm font-bold text-gray-800 truncate" title="${mainTitle}">${mainTitle}</h3>
                         ${subTitleHtml}
                         <div class="flex items-center mt-1.5 space-x-2 text-sm" id="eta-display-${route.id}">
@@ -258,33 +362,22 @@
                             <span class="text-gray-500">${loadingText}</span>
                         </div>
                     </div>
-                    <div class="drag-handle pl-4 py-2 text-gray-300 hover:text-gray-500 transition">
-                        <i class="fas fa-bars text-xl"></i>
+                    <div class="flex flex-col justify-evenly items-center border-l border-gray-50 bg-gray-50/50 w-12 shrink-0">
+                        <button onclick="openEditModal('${route.id}')" class="text-gray-400 hover:text-blue-500 transition w-full h-1/2 flex items-center justify-center border-b border-gray-100">
+                            <i class="fas fa-pen text-sm"></i>
+                        </button>
+                        <div class="drag-handle text-gray-300 hover:text-gray-500 transition w-full h-1/2 flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <i class="fas fa-bars text-lg"></i>
+                        </div>
                     </div>
                 </div>
             `;
             return wrapper;
         }
 
-        function deleteRoute(id) {
-            let routes = getRoutes();
-            routes = routes.filter(r => String(r.id) !== String(id));
-            saveRoutes(routes);
-            initDashboard();
-        }
-
-        function updateSorting() {
-            const newOrderIds = Array.from(document.querySelectorAll('.swipe-container')).map(el => el.dataset.id);
-            const currentRoutes = getRoutes();
-            currentRoutes.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
-            saveRoutes(currentRoutes);
-        }
-
-        function updateGroupSorting() {
-            const groupElements = Array.from(document.querySelectorAll('.group-block'));
-            const groupOrder = groupElements.map(el => el.dataset.groupName);
-            localStorage.setItem('hk_transit_group_order', JSON.stringify(groupOrder));
-        }
+        function deleteRoute(id) { let routes = getRoutes(); routes = routes.filter(r => String(r.id) !== String(id)); saveRoutes(routes); initDashboard(); }
+        function updateSorting() { const newOrderIds = Array.from(document.querySelectorAll('.swipe-container')).map(el => el.dataset.id); const currentRoutes = getRoutes(); currentRoutes.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id)); saveRoutes(currentRoutes); }
+        function updateGroupSorting() { const groupElements = Array.from(document.querySelectorAll('.group-block')); const groupOrder = groupElements.map(el => el.dataset.groupName); localStorage.setItem('hk_transit_group_order', JSON.stringify(groupOrder)); }
 
         function initSwipeToDelete() {
             const containers = document.querySelectorAll('.swipe-container');
@@ -293,7 +386,7 @@
                 const content = container.querySelector('.swipe-content');
                 let startX = 0, currentX = 0, isDragging = false;
                 content.addEventListener('pointerdown', (e) => {
-                    if (e.target.closest('.drag-handle') || e.target.closest('.swipe-actions')) return;
+                    if (e.target.closest('.drag-handle') || e.target.closest('.swipe-actions') || e.target.closest('button')) return;
                     isDragging = true; startX = e.clientX; content.style.transition = 'none'; content.setPointerCapture(e.pointerId);
                 });
                 content.addEventListener('pointermove', (e) => {
@@ -308,8 +401,7 @@
                     else { content.style.transform = 'translateX(0)'; }
                     currentX = 0;
                 };
-                content.addEventListener('pointerup', endDrag);
-                content.addEventListener('pointercancel', endDrag);
+                content.addEventListener('pointerup', endDrag); content.addEventListener('pointercancel', endDrag);
             });
         }
 
@@ -325,11 +417,7 @@
                     const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
                     if (response.ok) {
                         const text = await response.text();
-                        if (text && text.trim().length > 0) {
-                            const json = JSON.parse(text);
-                            etas = parseRawTrafficJson(route, json, now);
-                            directSuccess = true;
-                        }
+                        if (text && text.trim().length > 0) { const json = JSON.parse(text); etas = parseRawTrafficJson(route, json, now); directSuccess = true; }
                     }
                 } catch (directError) {}
 
@@ -337,10 +425,7 @@
                     try {
                         const n8nEtaUrl = `${window.APP_CONFIG.N8N_BASE_URL}/get-eta?url=${encodeURIComponent(route.apiUrl)}`;
                         const response = await fetch(n8nEtaUrl, { method: 'GET', headers: { 'x-transit-token': window.APP_CONFIG.N8N_TOKEN } });
-                        if (response.ok) {
-                            const json = await response.json();
-                            etas = parseRawTrafficJson(route, json, now);
-                        }
+                        if (response.ok) { const json = await response.json(); etas = parseRawTrafficJson(route, json, now); }
                     } catch (bffError) {}
                 }
 
@@ -349,7 +434,7 @@
                     if (etas.length > 0) {
                         const etaHtml = etas.map(min => {
                             let colorClass = min <= 5 ? "text-green-600" : (min <= 15 ? "text-orange-500" : "text-gray-800");
-                            let timeText = min === 0 ? "即將抵達" : min;
+                            let timeText = min === 0 ? getTranslation('arriving', '即將抵達') : min;
                             let unit = min === 0 ? "" : `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
                             return `<span class="${colorClass} font-black text-xl">${timeText}</span>${unit}`;
                         }).join('<span class="text-gray-300 mx-2">|</span>');
@@ -367,77 +452,36 @@
             let apiUrl = routeObj.apiUrl;
             try {
                 if (transitType === 'KMB' || transitType === 'CITYBUS' || transitType === 'CTB') {
-                    if (json.data && Array.isArray(json.data)) {
-                        etas = json.data.filter(item => item.eta).map(item => { return Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)); });
-                    }
+                    if (json.data && Array.isArray(json.data)) etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
                 } else if (transitType === 'MTR') {
-                    const urlObj = new URL(apiUrl);
-                    const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta');
+                    const urlObj = new URL(apiUrl); const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta');
                     const mtrKey = `${line}-${sta}`;
-                    if (json.data && json.data[mtrKey] && json.data[mtrKey][dir]) {
-                        etas = json.data[mtrKey][dir].filter(t => t.time).map(t => { return Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - now) / 60000)); });
-                    }
+                    if (json.data && json.data[mtrKey] && json.data[mtrKey][dir]) etas = json.data[mtrKey][dir].filter(t => t.time).map(t => Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - now) / 60000)));
                 } else if (transitType === 'FERRY') {
                     let etasRaw = [];
-                    // Extract from nested route_list
-                    if (json.data && json.data.route_list && Array.isArray(json.data.route_list)) {
-                        json.data.route_list.forEach(route => {
-                            if (route.stop_list && Array.isArray(route.stop_list)) {
-                                route.stop_list.forEach(stop => {
-                                    if (stop.departure_time) etasRaw.push(stop.departure_time);
-                                    else if (stop.eta) etasRaw.push(stop.eta);
-                                });
-                            }
-                        });
-                    }
-                    // Extract from flat data array (e.g. HKKF API)
+                    if (json.data && json.data.route_list && Array.isArray(json.data.route_list)) json.data.route_list.forEach(route => { if (route.stop_list && Array.isArray(route.stop_list)) route.stop_list.forEach(stop => { if (stop.departure_time) etasRaw.push(stop.departure_time); else if (stop.eta) etasRaw.push(stop.eta); }); });
                     let flatList = json.data || json;
-                    if (Array.isArray(flatList)) {
-                        flatList.forEach(item => {
-                            let timeStr = item.ETA || item.eta || item.time || item.departure_time;
-                            if (timeStr) etasRaw.push(timeStr);
-                        });
-                    }
-                    
+                    if (Array.isArray(flatList)) flatList.forEach(item => { let timeStr = item.ETA || item.eta || item.time || item.departure_time; if (timeStr) etasRaw.push(timeStr); });
                     etas = etasRaw.map(timeStr => {
                         let targetTime;
-                        // Time Padding for HH:mm or HH:mm:ss formats
                         if (/^\d{2}:\d{2}(:\d{2})?$/.test(timeStr)) {
-                            const today = new Date(now);
-                            const timeParts = timeStr.split(':');
-                            today.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), timeParts[2] ? parseInt(timeParts[2], 10) : 0, 0);
-                            
-                            // Cross-day schedule automatic padding logic
-                            if (today.getTime() < now) {
-                                today.setDate(today.getDate() + 1);
-                            }
+                            const today = new Date(now); const timeParts = timeStr.split(':'); today.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), timeParts[2] ? parseInt(timeParts[2], 10) : 0, 0);
+                            if (today.getTime() < now) today.setDate(today.getDate() + 1);
                             targetTime = today.getTime();
                         } else {
-                            // Safari defensive parsing avoiding .replace(/-/g, '/') on ISO 8601 strings
-                            let safeTimeStr = timeStr;
-                            if (!timeStr.includes('T')) {
-                                safeTimeStr = timeStr.replace(/-/g, '/');
-                            }
+                            let safeTimeStr = timeStr; if (!timeStr.includes('T')) safeTimeStr = timeStr.replace(/-/g, '/');
                             targetTime = new Date(safeTimeStr).getTime();
                         }
                         return Math.floor((targetTime - now) / 60000);
                     }).filter(e => !isNaN(e) && e >= 0);
-
                 } else if (transitType === 'NLB') {
-                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
-                        etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => { return Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)); });
-                    }
+                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
                 } else if (transitType === 'GMB') {
-                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
-                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
-                    }
+                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
                 } else if (transitType === 'LRT') {
                     let targetRouteNo = routeObj.route || '';
-                    if (!targetRouteNo && routeObj.route_key && routeObj.route_key.startsWith('route_lrt_')) {
-                        targetRouteNo = routeObj.route_key.replace('route_lrt_', '').toUpperCase();
-                    }
+                    if (!targetRouteNo && routeObj.route_key && routeObj.route_key.startsWith('route_lrt_')) targetRouteNo = routeObj.route_key.replace('route_lrt_', '').toUpperCase();
                     if (targetRouteNo.startsWith('LRT-')) targetRouteNo = targetRouteNo.replace('LRT-', '');
-                    
                     let rawEtas = [];
                     if (json.platform_list && Array.isArray(json.platform_list)) {
                         json.platform_list.forEach(plat => {
@@ -445,12 +489,8 @@
                                 plat.route_list.forEach(r => {
                                     if (r.route_no === targetRouteNo && r.time_en) {
                                         const timeStr = r.time_en.toLowerCase();
-                                        if (timeStr.includes('arriving') || timeStr.includes('departing') || timeStr === '-') {
-                                            rawEtas.push(0); 
-                                        } else {
-                                            const min = parseInt(timeStr);
-                                            if (!isNaN(min) && min >= 0) rawEtas.push(min);
-                                        }
+                                        if (timeStr.includes('arriving') || timeStr.includes('departing') || timeStr === '-') rawEtas.push(0); 
+                                        else { const min = parseInt(timeStr); if (!isNaN(min) && min >= 0) rawEtas.push(min); }
                                     }
                                 });
                             }
