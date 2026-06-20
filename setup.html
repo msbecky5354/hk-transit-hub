@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="setupTitle">貼地通 - 設定中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="lang.js?v=11"></script>
-    <script src="config.js?v=11"></script> 
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="lang.js?v=32"></script>
+    <script src="config.js?v=32"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=11"></script>
-    <script src="api-kmb.js?v=11"></script>
+    <script src="data-static.js?v=32"></script>
+    <script src="api-kmb.js?v=32"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
@@ -22,10 +25,11 @@
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
     <div id="app-header"></div>
     <main class="max-w-lg mx-auto mt-6 px-4">
+        
         <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group">第一步：設定群組</h2>
             <div class="flex flex-col gap-3">
-                <select id="group-select" onchange="checkStep1()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500 bg-white">
+                <select id="group-select" onchange="checkStep1()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
                     <option value="" disabled selected data-i18n="selectGroup">請選擇或建立群組...</option>
                 </select>
                 <input type="text" id="new-group-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500 hidden-step" data-i18n-placeholder="newGroupPlaceholder" placeholder="請輸入新群組名稱..." onkeyup="checkStep1()">
@@ -34,21 +38,25 @@
 
        <div id="step2-area" class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100 hidden-step transition-all">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step2Select">第二步：選擇交通工具類別</h2>
-            <div class="grid grid-cols-3 gap-2 mb-4" id="transit-selector">
-                <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">🚌</span><span data-i18n="transitBUS">巴士</span>
+            
+            <div class="grid grid-cols-2 gap-2 mb-4" id="transit-selector">
+                <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
+                    <span class="text-[22px] mb-1">🚌</span>
+                    <span data-i18n="transitBUS">巴士</span>
                 </button>
-                <button onclick="selectTransit('GMB')" id="pill-GMB" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">🚐</span><span data-i18n="transitGMB">小巴</span>
+                <button onclick="selectTransit('GMB')" id="pill-GMB" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
+                    <span class="text-[22px] mb-1">🚐</span>
+                    <span data-i18n="transitGMB">小巴</span>
                 </button>
-                <button onclick="selectTransit('MTR')" id="pill-MTR" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">🚇</span><span data-i18n="transitMTR">港鐵</span>
+                
+                <button onclick="selectTransit('MTR')" id="pill-MTR" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
+                    <img src="MTR.png" alt="MTR" class="w-8 h-8 object-contain mb-1" style="transform: scale(1.6); mix-blend-mode: multiply;">
+                    <span data-i18n="transitMTR" class="relative z-10">港鐵</span>
                 </button>
-                <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">🚊</span><span data-i18n="transitLRT">輕鐵</span>
-                </button>
-                <button onclick="selectTransit('FERRY')" id="pill-FERRY" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center gap-1 text-xs text-gray-500 bg-gray-50">
-                    <span class="text-lg">⛴️</span><span data-i18n="transitFERRY">渡輪</span>
+                
+                <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
+                    <i class="fas fa-train-tram text-orange-500 text-2xl mb-1"></i>
+                    <span data-i18n="transitLRT">輕鐵</span>
                 </button>
             </div>
 
@@ -68,7 +76,7 @@
 
             <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-3">
                 <div class="flex gap-2 mb-3" id="direction-tabs"></div>
-                <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base focus:outline-none focus:border-red-500 bg-white cursor-pointer">
+                <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
                     <option value="" disabled selected data-i18n="selectStop">請選擇上車分站...</option>
                 </select>
             </div>
@@ -81,7 +89,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
-                    <input type="text" id="alias-input" class="w-full border rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none bg-gray-50">
+                    <input type="text" id="alias-input" class="w-full border rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none bg-gray-50 font-medium">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel">顏色標籤</label>
@@ -134,7 +142,7 @@
 
         function selectTransit(type) {
             window.selectedTransit = type;
-            const pills = ['BUS', 'GMB', 'MTR', 'LRT', 'FERRY'];
+            const pills = ['BUS', 'GMB', 'MTR', 'LRT'];
             pills.forEach(p => {
                 const element = document.getElementById(`pill-${p}`);
                 if (p === type) { element.classList.add('selected', 'bg-red-50', 'text-red-700', 'border-red-500'); element.classList.remove('text-gray-500', 'bg-gray-50'); }
@@ -147,7 +155,7 @@
             document.getElementById('stop-selection-ui').classList.add('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
 
-            if (['MTR', 'FERRY', 'LRT'].includes(type)) {
+            if (['MTR', 'LRT'].includes(type)) {
                 inputArea.classList.add('hidden-step');
                 staticArea.classList.remove('hidden-step');
                 const placeholder = getTranslation('static_select_placeholder', '請選擇綫路 / 航線...');
@@ -179,7 +187,7 @@
             if (!container || !window.currentRouteData || !window.currentRouteData.directions) return;
             container.innerHTML = '';
             const directions = window.currentRouteData.directions;
-            const isStatic = ['MTR', 'LRT', 'FERRY'].includes(window.currentTransit);
+            const isStatic = ['MTR', 'LRT'].includes(window.currentTransit);
             Object.keys(directions).forEach(key => {
                 const dir = directions[key];
                 let destText = '';
@@ -212,13 +220,11 @@
             const dirData = window.currentRouteData.directions[window.activeDirection];
             if (!dirData || !dirData.stops || !Array.isArray(dirData.stops)) return;
             
-            const isStatic = ['MTR', 'LRT', 'FERRY'].includes(window.currentTransit);
+            const isStatic = ['MTR', 'LRT'].includes(window.currentTransit);
 
-            // --- 🛡️ 前端智能補全系統 (Auto-Hydration) 零寫死版 ---
             if (!isStatic && dirData.stops.length > 0) {
                 const firstStop = dirData.stops[0];
                 
-                // 🚨 終極修復：判定 name_obj 係咪吉嘅空殼 {}
                 const isNameObjEmpty = !firstStop.name_obj || Object.keys(firstStop.name_obj).length === 0;
                 const missingName = !firstStop.name_tc && !firstStop.name_en && isNameObjEmpty;
                 
@@ -230,7 +236,6 @@
                     const testStopId = firstStop.stop_id || firstStop.stop;
                     const routeNo = window.currentRouteData.route;
 
-                    // 🎯 零寫死智能探測：攞第一個 ID 去撞 API，邊個有反應就係邊間公司
                     if (testStopId) {
                         try {
                             let ctbTest = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${testStopId}`).then(r => r.json()).catch(() => ({}));
@@ -245,12 +250,10 @@
                         } catch (e) {}
                     }
 
-                    // 批量補全所有車站資料
                     const promises = dirData.stops.map(async (stop) => {
                         let stopId = stop.stop_id || stop.stop;
                         if (!stopId) return stop;
                         
-                        // 1. 動態生成 api_url
                         if (!stop.api_url) {
                             if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
                                 stop.api_url = `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/CTB/${stopId}/${routeNo}`;
@@ -260,7 +263,6 @@
                             }
                         }
                         
-                        // 2. 獲取真實中英文站名
                         try {
                             let url = '';
                             if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
@@ -276,7 +278,6 @@
                                     stop.name_tc = json.data.name_tc;
                                     stop.name_en = json.data.name_en;
                                     stop.stop_id = stopId;
-                                    // ✅ 將抓到嘅真名塞入去原本個空殼度！
                                     stop.name_obj = { tc: json.data.name_tc, en: json.data.name_en, sc: json.data.name_sc || json.data.name_tc };
                                 }
                             }
@@ -290,7 +291,6 @@
                 }
             }
 
-            // --- 正式渲染 Dropdown ---
             select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
 
             dirData.stops.forEach((stop, index) => {
@@ -298,7 +298,6 @@
                 if(isStatic) { 
                     stopName = getTranslation(stop.name_key, stop.name_key); 
                 } else {
-                    // 🚨 改良渲染邏輯：確保 name_obj 入面真係有 tc 先用
                     if (stop.name_obj && stop.name_obj['tc']) { 
                         stopName = stop.name_obj[currentLang] || stop.name_obj['tc']; 
                     }
