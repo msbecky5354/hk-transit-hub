@@ -143,8 +143,9 @@
 
         const buildApiUrl = (transitType, routeId, stopCode) => {
             if (transitType === 'MTR') {
-                const dir = stopCode.includes('-UP') ? 'UP' : 'DOWN';
-                const sta = stopCode.replace('-UP', '').replace('-DOWN', '');
+                // 🛑 終極修復：正確識別 OUTBOUND/INBOUND 並萃取純淨的 3-Letter 站碼
+                const dir = stopCode.includes('-OUTBOUND') ? 'UP' : 'DOWN';
+                const sta = stopCode.replace('-OUTBOUND', '').replace('-INBOUND', '');
                 return `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${routeId}&sta=${sta}&dir=${dir}`;
             }
             if (transitType === 'LRT') {
@@ -156,6 +157,7 @@
                 return `https://rt.data.gov.hk/v1/transport/tram/getSchedule.php?stop_id=${id}`;
             }
             if (transitType === 'FERRY') {
+                // ... 保持原有的 Ferry 邏輯不變
                 const ferryUrls = {
                     "FERRY-CC_CE-5": "https://rt.data.gov.hk/v1/transport/localferry/getSchedule.php?operator_id=nwff&route_id=nwff-cen-cc&pier_id=cen",
                     "FERRY-CC_CC-PIER": "https://rt.data.gov.hk/v1/transport/localferry/getSchedule.php?operator_id=nwff&route_id=nwff-cen-cc&pier_id=cc",
