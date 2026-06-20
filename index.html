@@ -6,8 +6,8 @@
     <title data-i18n="appName">貼地通 - 儀表板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="lang.js?v=12"></script>
-    <script src="config.js?v=12"></script>
+    <script src="lang.js?v=14"></script>
+    <script src="config.js?v=14"></script>
     <script src="header.js"></script>
     <script src="footer.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -191,31 +191,52 @@
             wrapper.dataset.id = route.id;
             const loadingText = getTranslation('loading', '載入中...');
             
-            let cardTitle = route.alias;
-            const hasI18nKeys = route.dest_key || route.dest_name || route.stop_key || route.stop_name;
+            // 1. 獲取站名同原始終點名
+            const getDynamicName = (nameObj) => {
+                if (!nameObj) return '';
+                if (typeof nameObj === 'string') return nameObj;
+                return nameObj[currentLang] || nameObj['tc'] || '';
+            };
+            const stopName = route.stop_key ? getTranslation(route.stop_key) : getDynamicName(route.stop_name);
+            const rawDestName = route.dest_key ? getTranslation(route.dest_key) : getDynamicName(route.dest_name);
+            
+            // 2. 智能清洗終點站名 (切走政府 API 冗餘字眼如 "[城巴] A21 往")
+            let cleanDestName = rawDestName;
+            if (cleanDestName.includes('往 ')) {
+                cleanDestName = cleanDestName.split('往 ').pop().trim();
+            } else if (cleanDestName.toLowerCase().includes(' to ')) {
+                cleanDestName = cleanDestName.split(/ to /i).pop().trim();
+            }
+            
+            // 3. 完美組裝「上車站名 往 方向」
+            const toWord = currentLang === 'en' ? ' To ' : ' 往 ';
+            const directionStr = cleanDestName ? `${stopName}${toWord}${cleanDestName}` : stopName;
 
-            if ((!cardTitle || cardTitle === '' || !route.isCustomAlias) && hasI18nKeys) {
-                let stopKey = route.stop_key;
-                const getDynamicName = (nameObj) => {
-                    if (!nameObj) return '';
-                    if (typeof nameObj === 'string') return nameObj;
-                    return nameObj[currentLang] || nameObj['tc'] || '';
+            // 4. 處理「自訂花名 (Alias)」嘅雙層顯示
+            let mainTitle = directionStr;
+            let subTitleHtml = '';
+            
+            if (route.isCustomAlias && route.alias && route.alias.trim() !== '') {
+                // 如果有花名：主標題顯示花名，副標題顯示「站名 往 方向」
+                mainTitle = route.alias; 
+                subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`;
+            }
+            
+            if (!mainTitle) mainTitle = route.route || "Transit Route";
+
+            // 5. 左側精簡 Badge 處理 (解決被擠壓出 ... 嘅痛點)
+            let shortRouteName = route.route || '';
+            if (route.transitType === 'LRT' && shortRouteName.startsWith('LRT-')) shortRouteName = shortRouteName.replace('LRT-', '');
+            if (route.transitType === 'FERRY' && shortRouteName.startsWith('FERRY-')) shortRouteName = shortRouteName.replace('FERRY-', '');
+            if (route.transitType === 'MTR') {
+                const mtrShort = {
+                   'TML': currentLang==='en'?'TML':'屯馬', 'TCL': currentLang==='en'?'TCL':'東涌',
+                   'KTL': currentLang==='en'?'KTL':'觀塘', 'TWL': currentLang==='en'?'TWL':'荃灣',
+                   'ISL': currentLang==='en'?'ISL':'港島', 'EAL': currentLang==='en'?'EAL':'東鐵',
+                   'SIL': currentLang==='en'?'SIL':'南港', 'TKL': currentLang==='en'?'TKL':'將軍澳',
+                   'AEL': currentLang==='en'?'AEL':'機快', 'DRL': currentLang==='en'?'DRL':'迪士尼'
                 };
-
-                const stopName = stopKey ? getTranslation(stopKey) : getDynamicName(route.stop_name);
-                const destName = route.dest_key ? getTranslation(route.dest_key) : getDynamicName(route.dest_name);
-                const routeName = route.route_key ? getTranslation(route.route_key) : route.route;
-                
-                if (route.transitType === 'FERRY') {
-                    cardTitle = `${routeName} (${stopName})`;
-                } else if (route.transitType === 'GMB') {
-                    cardTitle = destName ? `${destName} (${stopName})` : `${routeName} (${stopName})`;
-                } else {
-                    const toWord = currentLang === 'en' ? ' To ' : ' 往 ';
-                    cardTitle = destName ? `${routeName}${toWord}${destName} (${stopName})` : `${routeName} (${stopName})`;
-                }
-            } else if (!cardTitle || cardTitle === '') {
-                cardTitle = route.route || "Transit Route";
+                shortRouteName = mtrShort[shortRouteName] || shortRouteName;
             }
 
             const transitDisplay = getTransitDisplayHtml(route.transitType);
@@ -225,13 +246,14 @@
                     <i class="fas fa-trash-alt text-xl"></i>
                 </div>
                 <div class="swipe-content border-l-4 bg-white flex items-center p-4 rounded-r-lg" style="border-color: ${route.color}">
-                    <div class="w-20 flex flex-col items-center justify-center border-r border-gray-100 pr-3 mr-3 text-center">
+                    <div class="w-16 flex flex-col items-center justify-center border-r border-gray-100 pr-3 mr-3 text-center shrink-0">
                         <span class="text-[9px] text-gray-400 font-bold mb-1 flex items-center justify-center whitespace-nowrap">${transitDisplay}</span>
-                        <span class="text-md font-black text-gray-800 truncate max-w-full">${route.route_key ? getTranslation(route.route_key) : route.route}</span>
+                        <span class="text-base font-black text-gray-800 truncate max-w-full">${shortRouteName}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h3 class="text-sm font-bold text-gray-800 truncate" title="${cardTitle}">${cardTitle}</h3>
-                        <div class="flex items-center mt-1 space-x-2 text-sm" id="eta-display-${route.id}">
+                        <h3 class="text-sm font-bold text-gray-800 truncate" title="${mainTitle}">${mainTitle}</h3>
+                        ${subTitleHtml}
+                        <div class="flex items-center mt-1.5 space-x-2 text-sm" id="eta-display-${route.id}">
                             <i class="fas fa-spinner fa-spin text-gray-300"></i>
                             <span class="text-gray-500">${loadingText}</span>
                         </div>
@@ -305,7 +327,7 @@
                         const text = await response.text();
                         if (text && text.trim().length > 0) {
                             const json = JSON.parse(text);
-                            etas = parseRawTrafficJson(route.transitType, json, route.apiUrl, now);
+                            etas = parseRawTrafficJson(route, json, now);
                             directSuccess = true;
                         }
                     }
@@ -317,7 +339,7 @@
                         const response = await fetch(n8nEtaUrl, { method: 'GET', headers: { 'x-transit-token': window.APP_CONFIG.N8N_TOKEN } });
                         if (response.ok) {
                             const json = await response.json();
-                            etas = parseRawTrafficJson(route.transitType, json, route.apiUrl, now);
+                            etas = parseRawTrafficJson(route, json, now);
                         }
                     } catch (bffError) {}
                 }
@@ -339,8 +361,10 @@
             });
         }
 
-        function parseRawTrafficJson(transitType, json, apiUrl, now) {
+        function parseRawTrafficJson(routeObj, json, now) {
             let etas = [];
+            let transitType = routeObj.transitType;
+            let apiUrl = routeObj.apiUrl;
             try {
                 if (transitType === 'KMB' || transitType === 'CITYBUS' || transitType === 'CTB') {
                     if (json.data && Array.isArray(json.data)) {
@@ -355,6 +379,7 @@
                     }
                 } else if (transitType === 'FERRY') {
                     let etasRaw = [];
+                    // Extract from nested route_list
                     if (json.data && json.data.route_list && Array.isArray(json.data.route_list)) {
                         json.data.route_list.forEach(route => {
                             if (route.stop_list && Array.isArray(route.stop_list)) {
@@ -365,6 +390,7 @@
                             }
                         });
                     }
+                    // Extract from flat data array (e.g. HKKF API)
                     let flatList = json.data || json;
                     if (Array.isArray(flatList)) {
                         flatList.forEach(item => {
@@ -372,15 +398,31 @@
                             if (timeStr) etasRaw.push(timeStr);
                         });
                     }
+                    
                     etas = etasRaw.map(timeStr => {
-                        let safeTimeStr = timeStr.replace(/-/g, '/');
-                        if (/^\d{2}:\d{2}(:\d{2})?$/.test(safeTimeStr)) {
+                        let targetTime;
+                        // Time Padding for HH:mm or HH:mm:ss formats
+                        if (/^\d{2}:\d{2}(:\d{2})?$/.test(timeStr)) {
                             const today = new Date(now);
-                            const datePrefix = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
-                            safeTimeStr = `${datePrefix} ${safeTimeStr}`;
+                            const timeParts = timeStr.split(':');
+                            today.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), timeParts[2] ? parseInt(timeParts[2], 10) : 0, 0);
+                            
+                            // Cross-day schedule automatic padding logic
+                            if (today.getTime() < now) {
+                                today.setDate(today.getDate() + 1);
+                            }
+                            targetTime = today.getTime();
+                        } else {
+                            // Safari defensive parsing avoiding .replace(/-/g, '/') on ISO 8601 strings
+                            let safeTimeStr = timeStr;
+                            if (!timeStr.includes('T')) {
+                                safeTimeStr = timeStr.replace(/-/g, '/');
+                            }
+                            targetTime = new Date(safeTimeStr).getTime();
                         }
-                        return Math.floor((new Date(safeTimeStr).getTime() - now) / 60000);
+                        return Math.floor((targetTime - now) / 60000);
                     }).filter(e => !isNaN(e) && e >= 0);
+
                 } else if (transitType === 'NLB') {
                     if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
                         etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => { return Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)); });
@@ -390,9 +432,31 @@
                         etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
                     }
                 } else if (transitType === 'LRT') {
-                    if (json.platform_list && json.platform_list.length > 0) {
-                        etas = (json.platform_list[0].route_list || []).map(r => { const min = parseInt(r.stop_time); return isNaN(min) ? 0 : min; });
+                    let targetRouteNo = routeObj.route || '';
+                    if (!targetRouteNo && routeObj.route_key && routeObj.route_key.startsWith('route_lrt_')) {
+                        targetRouteNo = routeObj.route_key.replace('route_lrt_', '').toUpperCase();
                     }
+                    if (targetRouteNo.startsWith('LRT-')) targetRouteNo = targetRouteNo.replace('LRT-', '');
+                    
+                    let rawEtas = [];
+                    if (json.platform_list && Array.isArray(json.platform_list)) {
+                        json.platform_list.forEach(plat => {
+                            if (plat.route_list && Array.isArray(plat.route_list)) {
+                                plat.route_list.forEach(r => {
+                                    if (r.route_no === targetRouteNo && r.time_en) {
+                                        const timeStr = r.time_en.toLowerCase();
+                                        if (timeStr.includes('arriving') || timeStr.includes('departing') || timeStr === '-') {
+                                            rawEtas.push(0); 
+                                        } else {
+                                            const min = parseInt(timeStr);
+                                            if (!isNaN(min) && min >= 0) rawEtas.push(min);
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    etas = [...new Set(rawEtas)].sort((a, b) => a - b);
                 }
             } catch (err) {}
             return etas;
