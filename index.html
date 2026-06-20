@@ -18,7 +18,7 @@
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         .drag-handle { cursor: grab; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
-        .group-title-handle { cursor: grab; }
+        .group-title-handle { cursor: grab; touch-action: none; padding: 0.5rem 0; }
         .group-title-handle:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; border: 2px dashed #cbd5e1; }
         .group-block { transition: all 0.2s; }
@@ -28,7 +28,7 @@
 <body class="bg-gray-100 min-h-screen flex flex-col font-sans pb-24">
     <div id="app-header"></div>
     
-    <main id="dashboard-container" class="flex-1 p-4 overflow-y-auto space-y-6">
+    <main id="dashboard-container" class="flex-1 p-4 overflow-y-auto">
         <div id="empty-state" class="hidden flex flex-col items-center justify-center h-64 text-gray-400">
             <i class="fas fa-route text-4xl mb-3 text-gray-300"></i>
             <p data-i18n="emptyDesc">尚未設定任何路線</p>
@@ -38,7 +38,6 @@
 
     <div id="app-footer"></div>
 
-    <!-- 編輯花名專用 Modal -->
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
         <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
             <h3 class="font-bold text-lg mb-4 text-gray-800" data-i18n="editRouteTitle">✏️ 編輯路線花名</h3>
@@ -55,31 +54,69 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
-            
-            // 🚨 Deep Link 攔截器 (家庭共享匯入)
             checkImportDeepLink();
-            
             autoHealRoutes();
             initDashboard();
         });
 
         // ==========================================
-        // 模塊 1：家庭共享與匯入系統 (Deep Link)
+        // 模塊 1：隱形縮網址與家庭共享
         // ==========================================
-        function shareGroup(groupName) {
+        
+        // JSONP 繞過 CORS 進行極速縮網址
+        function shortenUrl(longUrl) {
+            return new Promise((resolve) => {
+                const callbackName = 'isgd_callback_' + Math.round(100000 * Math.random());
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    const script = document.getElementById(callbackName);
+                    if(script) script.remove();
+                    // 成功縮短就回傳，失敗就用返長 Link
+                    resolve(data.shorturl ? data.shorturl : longUrl);
+                };
+                const script = document.createElement('script');
+                script.id = callbackName;
+                script.src = `https://is.gd/create.php?format=jsonp&url=${encodeURIComponent(longUrl)}&callback=${callbackName}`;
+                script.onerror = () => {
+                    delete window[callbackName]; script.remove(); resolve(longUrl); 
+                };
+                document.body.appendChild(script);
+            });
+        }
+
+        async function shareGroup(event, groupName) {
             const routes = getRoutes().filter(r => r.group === groupName);
             if (routes.length === 0) return;
             
-            // 重新賦予 ID 防止同機匯入撞 ID
+            // UI 狀態：顯示 Loading 防止連撳
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span class="text-xs ml-1 font-bold">縮網址中</span>';
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+
             const exportData = routes.map(r => ({ ...r, id: 'item_' + Date.now() + Math.floor(Math.random() * 1000) }));
             const base64Str = btoa(encodeURIComponent(JSON.stringify(exportData)));
-            const link = window.location.origin + window.location.pathname + '?import=' + base64Str;
+            const longLink = window.location.origin + window.location.pathname + '?import=' + base64Str;
             const shareTitle = getTranslation('appName', '貼地通') + ' - ' + getTranslation(groupName, groupName);
 
-            if (navigator.share) {
-                navigator.share({ title: shareTitle, text: `快啲加入我嘅出門儀表板【${getTranslation(groupName, groupName)}】！\n\n`, url: link }).catch(console.error);
-            } else {
-                prompt(getTranslation('copyShareLink', '請複製以下連結分享給家人：'), link);
+            try {
+                // 等待縮網址完成
+                const shortLink = await shortenUrl(longLink);
+                const shareText = `快啲加入我嘅出門儀表板【${getTranslation(groupName, groupName)}】！\n\n`;
+
+                if (navigator.share) {
+                    await navigator.share({ title: shareTitle, text: shareText, url: shortLink });
+                } else {
+                    prompt(getTranslation('copyShareLink', '請複製以下連結分享給家人：'), shareText + shortLink);
+                }
+            } catch (error) {
+                console.error("Share failed:", error);
+            } finally {
+                // 復原按鈕狀態
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                btn.classList.remove('opacity-70');
             }
         }
 
@@ -91,14 +128,20 @@
                     const newRoutes = JSON.parse(decodeURIComponent(atob(importData)));
                     if (Array.isArray(newRoutes) && newRoutes.length > 0) {
                         let routes = getRoutes();
-                        routes = routes.concat(newRoutes);
-                        saveRoutes(routes);
-                        alert(getTranslation('importSuccess', '🎉 成功匯入群組路線！'));
+                        let importedCount = 0;
+                        newRoutes.forEach(newRoute => {
+                            const isDuplicate = routes.some(r => r.group === newRoute.group && r.transitType === newRoute.transitType && r.route === newRoute.route && r.stop_id === newRoute.stop_id);
+                            if (!isDuplicate) {
+                                newRoute.id = 'item_' + Date.now() + Math.floor(Math.random() * 10000);
+                                routes.push(newRoute);
+                                importedCount++;
+                            }
+                        });
+                        if (importedCount > 0) {
+                            saveRoutes(routes); alert(`🎉 成功匯入 ${importedCount} 條全新路線！`);
+                        } else { alert('⚠️ 這些路線已經在你的儀表板中，系統已自動攔截重複資料！'); }
                     }
-                } catch (e) {
-                    alert(getTranslation('importFail', '❌ 匯入失敗，連結可能無效或已損壞。'));
-                }
-                // 清洗 URL，移除 import 參數，保持畫面乾淨
+                } catch (e) { alert('❌ 匯入失敗，連結可能無效或已損壞。'); }
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
@@ -112,15 +155,11 @@
             if (!route) return;
             currentEditId = id;
             document.getElementById('edit-alias-input').value = route.alias || '';
-            const modal = document.getElementById('edit-modal');
-            modal.classList.remove('hidden-step');
-            // 替換 i18n 文字以策安全
+            document.getElementById('edit-modal').classList.remove('hidden-step');
             if (typeof translatePage === "function") translatePage();
         }
 
-        function closeEditModal() {
-            document.getElementById('edit-modal').classList.add('hidden-step');
-        }
+        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden-step'); }
 
         function saveEdit() {
             const newAlias = document.getElementById('edit-alias-input').value.trim();
@@ -129,8 +168,7 @@
             if (routeIndex !== -1) {
                 routes[routeIndex].alias = newAlias;
                 routes[routeIndex].isCustomAlias = newAlias !== "";
-                saveRoutes(routes);
-                initDashboard();
+                saveRoutes(routes); initDashboard();
             }
             closeEditModal();
         }
@@ -139,37 +177,19 @@
         // 模塊 3：儀表板與卡片渲染
         // ==========================================
         function autoHealRoutes() {
-            let routesStr = localStorage.getItem('hk_transit_routes');
-            if (!routesStr) return;
-            let routes = JSON.parse(routesStr);
-            let changed = false;
-            
-            let filteredRoutes = routes.filter(r => {
-                if (r.transitType === 'TRAM') { changed = true; return false; }
-                return true;
-            });
-
+            let routesStr = localStorage.getItem('hk_transit_routes'); if (!routesStr) return;
+            let routes = JSON.parse(routesStr); let changed = false;
+            let filteredRoutes = routes.filter(r => { if (r.transitType === 'TRAM') { changed = true; return false; } return true; });
             filteredRoutes.forEach(r => {
                 if (r.transitType === 'MTR' && r.apiUrl && (r.apiUrl.includes('-OUTBOUND') || r.apiUrl.includes('-INBOUND'))) {
                     try {
-                        let urlObj = new URL(r.apiUrl);
-                        let sta = urlObj.searchParams.get('sta');
-                        if (sta && sta.includes('-OUTBOUND')) {
-                            urlObj.searchParams.set('sta', sta.replace('-OUTBOUND', ''));
-                            urlObj.searchParams.set('dir', 'UP');
-                            r.apiUrl = urlObj.toString();
-                            changed = true;
-                        } else if (sta && sta.includes('-INBOUND')) {
-                            urlObj.searchParams.set('sta', sta.replace('-INBOUND', ''));
-                            urlObj.searchParams.set('dir', 'DOWN');
-                            r.apiUrl = urlObj.toString();
-                            changed = true;
-                        }
+                        let urlObj = new URL(r.apiUrl); let sta = urlObj.searchParams.get('sta');
+                        if (sta && sta.includes('-OUTBOUND')) { urlObj.searchParams.set('sta', sta.replace('-OUTBOUND', '')); urlObj.searchParams.set('dir', 'UP'); r.apiUrl = urlObj.toString(); changed = true; } 
+                        else if (sta && sta.includes('-INBOUND')) { urlObj.searchParams.set('sta', sta.replace('-INBOUND', '')); urlObj.searchParams.set('dir', 'DOWN'); r.apiUrl = urlObj.toString(); changed = true; }
                     } catch(e) {}
                 }
                 if (r.apiUrl && typeof r.apiUrl === 'string') {
-                    const urlLower = r.apiUrl.toLowerCase();
-                    let correctType = r.transitType;
+                    const urlLower = r.apiUrl.toLowerCase(); let correctType = r.transitType;
                     if (urlLower.includes('kmb') || urlLower.includes('etabus')) correctType = 'KMB';
                     else if (urlLower.includes('citybus') || urlLower.includes('ctb')) correctType = 'CTB';
                     else if (urlLower.includes('nlb')) correctType = 'NLB';
@@ -179,15 +199,10 @@
             if (changed) { localStorage.setItem('hk_transit_routes', JSON.stringify(filteredRoutes)); }
         }
 
-        function getTranslation(key, defaultText) {
-            return (langDict[currentLang] && langDict[currentLang][key]) ? langDict[currentLang][key] : (defaultText || key);
-        }
+        function getTranslation(key, defaultText) { return (langDict[currentLang] && langDict[currentLang][key]) ? langDict[currentLang][key] : (defaultText || key); }
 
         function getRoutes() {
-            let routesStr = localStorage.getItem('hk_transit_routes');
-            let routes = [];
-            if (!routesStr) return [];
-            routes = JSON.parse(routesStr);
+            let routesStr = localStorage.getItem('hk_transit_routes'); let routes = []; if (!routesStr) return []; routes = JSON.parse(routesStr);
             let needSave = false;
             routes = routes.map(r => {
                 if (r.group === "🏠 屋企落樓" || r.group === "🏠 屋企落楼" || r.group === "🏠 Home") { r.group = "groupHome"; needSave = true; }
@@ -202,22 +217,11 @@
 
         function getTransitDisplayHtml(transitType) {
             const iconMap = {
-                'KMB': '<i class="fas fa-bus text-red-500 mr-1"></i>',
-                'CITYBUS': '<i class="fas fa-bus text-yellow-500 mr-1"></i>',
-                'CTB': '<i class="fas fa-bus text-yellow-500 mr-1"></i>',
-                'NLB': '<i class="fas fa-bus-simple text-blue-500 mr-1"></i>',
+                'KMB': '<i class="fas fa-bus text-red-500 mr-1"></i>', 'CITYBUS': '<i class="fas fa-bus text-yellow-500 mr-1"></i>', 'CTB': '<i class="fas fa-bus text-yellow-500 mr-1"></i>', 'NLB': '<i class="fas fa-bus-simple text-blue-500 mr-1"></i>',
                 'MTR': '<img src="MTR.png" alt="MTR" class="inline-block w-6 h-6 mr-1 align-middle object-contain transform scale-125 -my-1">', 
-                'LRT': '<i class="fas fa-train-tram text-orange-500 mr-1"></i>',
-                'FERRY': '<i class="fas fa-ship text-blue-600 mr-1"></i>',
-                'GMB': '<i class="fas fa-van-shuttle text-green-500 mr-1"></i>',
-                'BUS': '<i class="fas fa-bus text-gray-500 mr-1"></i>'
+                'LRT': '<i class="fas fa-train-tram text-orange-500 mr-1"></i>', 'FERRY': '<i class="fas fa-ship text-blue-600 mr-1"></i>', 'GMB': '<i class="fas fa-van-shuttle text-green-500 mr-1"></i>', 'BUS': '<i class="fas fa-bus text-gray-500 mr-1"></i>'
             };
-            const langKeyMap = {
-                'KMB': 'transitKMB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB',
-                'MTR': 'transitMTR', 'LRT': 'transitLRT',
-                'FERRY': 'transitFERRY', 'NLB': 'transitNLB', 'GMB': 'transitGMB',
-                'BUS': 'transitBUS'
-            };
+            const langKeyMap = { 'KMB': 'transitKMB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB', 'MTR': 'transitMTR', 'LRT': 'transitLRT', 'FERRY': 'transitFERRY', 'NLB': 'transitNLB', 'GMB': 'transitGMB', 'BUS': 'transitBUS' };
             const safeType = transitType ? transitType.toUpperCase() : 'BUS';
             const icon = iconMap[safeType] || '<i class="fas fa-route mr-1"></i>';
             const localizedName = getTranslation(langKeyMap[safeType], safeType);
@@ -229,26 +233,23 @@
             const emptyState = document.getElementById('empty-state');
             const filteredRoutes = getRoutes(); 
 
+            if (window.dashboardSortable) { window.dashboardSortable.destroy(); }
+            if (window.listSortables) { window.listSortables.forEach(s => s.destroy()); }
+            window.listSortables = [];
+
             container.innerHTML = '';
             if (filteredRoutes.length === 0) {
-                container.appendChild(emptyState);
-                emptyState.classList.remove('hidden');
-                return;
+                container.appendChild(emptyState); emptyState.classList.remove('hidden'); return;
             }
 
             const grouped = filteredRoutes.reduce((acc, route) => {
-                if (!acc[route.group]) acc[route.group] = [];
-                acc[route.group].push(route);
-                return acc;
+                if (!acc[route.group]) acc[route.group] = []; acc[route.group].push(route); return acc;
             }, {});
 
             const savedGroupOrder = JSON.parse(localStorage.getItem('hk_transit_group_order') || '[]');
             const sortedGroupNames = Object.keys(grouped).sort((a, b) => {
-                const idxA = savedGroupOrder.indexOf(a);
-                const idxB = savedGroupOrder.indexOf(b);
-                if (idxA === -1 && idxB === -1) return 0;
-                if (idxA === -1) return 1;
-                if (idxB === -1) return -1;
+                const idxA = savedGroupOrder.indexOf(a); const idxB = savedGroupOrder.indexOf(b);
+                if (idxA === -1 && idxB === -1) return 0; if (idxA === -1) return 1; if (idxB === -1) return -1;
                 return idxA - idxB;
             });
 
@@ -259,13 +260,13 @@
                 groupDiv.className = 'group-block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100';
                 groupDiv.dataset.groupName = groupName;
                 
-                // ✅ 標題列加入拖曳手柄 (fa-grip-vertical) 同埋 分享按鈕 (fa-share-nodes)
+                // ✅ 按鈕加入 event 參數，觸發時會顯示 Loading
                 groupDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-50">
                         <h2 class="group-title-handle text-md font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 hover:text-red-500 transition">
                             <i class="fas fa-grip-vertical text-gray-300"></i> <span>${displayGroupName}</span>
                         </h2>
-                        <button onclick="shareGroup('${groupName}')" class="text-gray-400 hover:text-blue-500 transition px-2 py-1 bg-blue-50 rounded-md">
+                        <button onclick="shareGroup(event, '${groupName}')" class="text-gray-400 hover:text-blue-500 transition px-2 py-1 bg-blue-50 rounded-md">
                             <i class="fas fa-share-nodes"></i> <span class="text-xs ml-1 font-bold">分享</span>
                         </button>
                     </div>
@@ -275,26 +276,23 @@
                 listDiv.dataset.group = groupName;
 
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
+                groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
-                groupDiv.appendChild(listDiv);
-                container.appendChild(groupDiv);
-
-                // 卡片層級拖曳
-                new Sortable(listDiv, {
+                const listSortable = new Sortable(listDiv, {
                     handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
+                    delay: 150, delayOnTouchOnly: true, fallbackOnBody: true,
                     onEnd: function () { updateSorting(); }
                 });
+                window.listSortables.push(listSortable);
             });
 
-            // 群組層級拖曳
-            new Sortable(container, {
+            window.dashboardSortable = new Sortable(container, {
                 draggable: '.group-block', handle: '.group-title-handle', animation: 150, ghostClass: 'sortable-ghost',
+                delay: 150, delayOnTouchOnly: true, fallbackOnBody: true,
                 onEnd: function () { updateGroupSorting(); }
             });
 
-            translatePage(); 
-            initSwipeToDelete();
-            fetchAllETAs();
+            translatePage(); initSwipeToDelete(); fetchAllETAs();
         }
 
         function createRouteCard(route) {
@@ -304,8 +302,7 @@
             const loadingText = getTranslation('loading', '載入中...');
             
             const getDynamicName = (nameObj) => {
-                if (!nameObj) return '';
-                if (typeof nameObj === 'string') return nameObj;
+                if (!nameObj) return ''; if (typeof nameObj === 'string') return nameObj;
                 return nameObj[currentLang] || nameObj['tc'] || '';
             };
             const stopName = route.stop_key ? getTranslation(route.stop_key) : getDynamicName(route.stop_name);
@@ -322,8 +319,7 @@
             let subTitleHtml = '';
             
             if (route.isCustomAlias && route.alias && route.alias.trim() !== '') {
-                mainTitle = route.alias; 
-                subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`;
+                mainTitle = route.alias; subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`;
             }
             if (!mainTitle) mainTitle = route.route || "Transit Route";
 
@@ -345,11 +341,8 @@
                 badgeHtml = `<span class="text-[9px] text-gray-400 font-bold mb-1 flex items-center justify-center whitespace-nowrap">${transitDisplay}</span><span class="text-base font-black text-gray-800 truncate max-w-full">${shortRouteName}</span>`;
             }
 
-            // ✅ 加入側邊欄工具 (編輯按鈕 + 拖曳按鈕)
             wrapper.innerHTML = `
-                <div class="swipe-actions cursor-pointer hover:bg-red-700 transition" onclick="deleteRoute('${route.id}')">
-                    <i class="fas fa-trash-alt text-xl"></i>
-                </div>
+                <div class="swipe-actions cursor-pointer hover:bg-red-700 transition" onclick="deleteRoute('${route.id}')"><i class="fas fa-trash-alt text-xl"></i></div>
                 <div class="swipe-content border-l-4 bg-white flex items-stretch p-0 rounded-r-lg" style="border-color: ${route.color}">
                     <div class="w-16 flex flex-col items-center justify-center border-r border-gray-50 pr-2 mr-3 my-4 ml-3 text-center shrink-0 min-h-[44px]">
                         ${badgeHtml}
@@ -358,8 +351,7 @@
                         <h3 class="text-sm font-bold text-gray-800 truncate" title="${mainTitle}">${mainTitle}</h3>
                         ${subTitleHtml}
                         <div class="flex items-center mt-1.5 space-x-2 text-sm" id="eta-display-${route.id}">
-                            <i class="fas fa-spinner fa-spin text-gray-300"></i>
-                            <span class="text-gray-500">${loadingText}</span>
+                            <i class="fas fa-spinner fa-spin text-gray-300"></i><span class="text-gray-500">${loadingText}</span>
                         </div>
                     </div>
                     <div class="flex flex-col justify-evenly items-center border-l border-gray-50 bg-gray-50/50 w-12 shrink-0">
@@ -390,37 +382,28 @@
                     isDragging = true; startX = e.clientX; content.style.transition = 'none'; content.setPointerCapture(e.pointerId);
                 });
                 content.addEventListener('pointermove', (e) => {
-                    if (!isDragging) return;
-                    const deltaX = e.clientX - startX;
+                    if (!isDragging) return; const deltaX = e.clientX - startX;
                     if (deltaX < 0 && deltaX > -150) { currentX = deltaX; content.style.transform = `translateX(${currentX}px)`; }
                 });
                 const endDrag = (e) => {
-                    if (!isDragging) return;
-                    isDragging = false; content.style.transition = 'transform 0.2s ease-out'; content.releasePointerCapture(e.pointerId);
+                    if (!isDragging) return; isDragging = false; content.style.transition = 'transform 0.2s ease-out'; content.releasePointerCapture(e.pointerId);
                     if (currentX < threshold) { content.style.transform = `translateX(-100%)`; setTimeout(() => deleteRoute(container.dataset.id), 200); }
-                    else { content.style.transform = 'translateX(0)'; }
-                    currentX = 0;
+                    else { content.style.transform = 'translateX(0)'; } currentX = 0;
                 };
                 content.addEventListener('pointerup', endDrag); content.addEventListener('pointercancel', endDrag);
             });
         }
 
         async function fetchAllETAs() {
-            const routes = getRoutes();
-            const now = Date.now();
+            const routes = getRoutes(); const now = Date.now();
             routes.forEach(async (route) => {
                 if (!route.apiUrl || route.apiUrl === '#') return;
                 const display = document.getElementById(`eta-display-${route.id}`);
-                let etas = [];
-                let directSuccess = false;
+                let etas = []; let directSuccess = false;
                 try {
                     const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
-                    if (response.ok) {
-                        const text = await response.text();
-                        if (text && text.trim().length > 0) { const json = JSON.parse(text); etas = parseRawTrafficJson(route, json, now); directSuccess = true; }
-                    }
+                    if (response.ok) { const text = await response.text(); if (text && text.trim().length > 0) { const json = JSON.parse(text); etas = parseRawTrafficJson(route, json, now); directSuccess = true; } }
                 } catch (directError) {}
-
                 if (!directSuccess) {
                     try {
                         const n8nEtaUrl = `${window.APP_CONFIG.N8N_BASE_URL}/get-eta?url=${encodeURIComponent(route.apiUrl)}`;
@@ -428,7 +411,6 @@
                         if (response.ok) { const json = await response.json(); etas = parseRawTrafficJson(route, json, now); }
                     } catch (bffError) {}
                 }
-
                 if (display) {
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
@@ -439,39 +421,29 @@
                             return `<span class="${colorClass} font-black text-xl">${timeText}</span>${unit}`;
                         }).join('<span class="text-gray-300 mx-2">|</span>');
                         display.innerHTML = etaHtml;
-                    } else {
-                        display.innerHTML = `<span class="text-gray-400 text-sm">${getTranslation('no_schedule', '暫無班次')}</span>`;
-                    }
+                    } else { display.innerHTML = `<span class="text-gray-400 text-sm">${getTranslation('no_schedule', '暫無班次')}</span>`; }
                 }
             });
         }
 
         function parseRawTrafficJson(routeObj, json, now) {
-            let etas = [];
-            let transitType = routeObj.transitType;
-            let apiUrl = routeObj.apiUrl;
+            let etas = []; let transitType = routeObj.transitType; let apiUrl = routeObj.apiUrl;
             try {
                 if (transitType === 'KMB' || transitType === 'CITYBUS' || transitType === 'CTB') {
                     if (json.data && Array.isArray(json.data)) etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
                 } else if (transitType === 'MTR') {
-                    const urlObj = new URL(apiUrl); const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta');
-                    const mtrKey = `${line}-${sta}`;
+                    const urlObj = new URL(apiUrl); const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta'); const mtrKey = `${line}-${sta}`;
                     if (json.data && json.data[mtrKey] && json.data[mtrKey][dir]) etas = json.data[mtrKey][dir].filter(t => t.time).map(t => Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - now) / 60000)));
                 } else if (transitType === 'FERRY') {
                     let etasRaw = [];
                     if (json.data && json.data.route_list && Array.isArray(json.data.route_list)) json.data.route_list.forEach(route => { if (route.stop_list && Array.isArray(route.stop_list)) route.stop_list.forEach(stop => { if (stop.departure_time) etasRaw.push(stop.departure_time); else if (stop.eta) etasRaw.push(stop.eta); }); });
-                    let flatList = json.data || json;
-                    if (Array.isArray(flatList)) flatList.forEach(item => { let timeStr = item.ETA || item.eta || item.time || item.departure_time; if (timeStr) etasRaw.push(timeStr); });
+                    let flatList = json.data || json; if (Array.isArray(flatList)) flatList.forEach(item => { let timeStr = item.ETA || item.eta || item.time || item.departure_time; if (timeStr) etasRaw.push(timeStr); });
                     etas = etasRaw.map(timeStr => {
                         let targetTime;
                         if (/^\d{2}:\d{2}(:\d{2})?$/.test(timeStr)) {
                             const today = new Date(now); const timeParts = timeStr.split(':'); today.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), timeParts[2] ? parseInt(timeParts[2], 10) : 0, 0);
-                            if (today.getTime() < now) today.setDate(today.getDate() + 1);
-                            targetTime = today.getTime();
-                        } else {
-                            let safeTimeStr = timeStr; if (!timeStr.includes('T')) safeTimeStr = timeStr.replace(/-/g, '/');
-                            targetTime = new Date(safeTimeStr).getTime();
-                        }
+                            if (today.getTime() < now) today.setDate(today.getDate() + 1); targetTime = today.getTime();
+                        } else { let safeTimeStr = timeStr; if (!timeStr.includes('T')) safeTimeStr = timeStr.replace(/-/g, '/'); targetTime = new Date(safeTimeStr).getTime(); }
                         return Math.floor((targetTime - now) / 60000);
                     }).filter(e => !isNaN(e) && e >= 0);
                 } else if (transitType === 'NLB') {
@@ -483,19 +455,7 @@
                     if (!targetRouteNo && routeObj.route_key && routeObj.route_key.startsWith('route_lrt_')) targetRouteNo = routeObj.route_key.replace('route_lrt_', '').toUpperCase();
                     if (targetRouteNo.startsWith('LRT-')) targetRouteNo = targetRouteNo.replace('LRT-', '');
                     let rawEtas = [];
-                    if (json.platform_list && Array.isArray(json.platform_list)) {
-                        json.platform_list.forEach(plat => {
-                            if (plat.route_list && Array.isArray(plat.route_list)) {
-                                plat.route_list.forEach(r => {
-                                    if (r.route_no === targetRouteNo && r.time_en) {
-                                        const timeStr = r.time_en.toLowerCase();
-                                        if (timeStr.includes('arriving') || timeStr.includes('departing') || timeStr === '-') rawEtas.push(0); 
-                                        else { const min = parseInt(timeStr); if (!isNaN(min) && min >= 0) rawEtas.push(min); }
-                                    }
-                                });
-                            }
-                        });
-                    }
+                    if (json.platform_list && Array.isArray(json.platform_list)) { json.platform_list.forEach(plat => { if (plat.route_list && Array.isArray(plat.route_list)) { plat.route_list.forEach(r => { if (r.route_no === targetRouteNo && r.time_en) { const timeStr = r.time_en.toLowerCase(); if (timeStr.includes('arriving') || timeStr.includes('departing') || timeStr === '-') rawEtas.push(0); else { const min = parseInt(timeStr); if (!isNaN(min) && min >= 0) rawEtas.push(min); } } }); } }); }
                     etas = [...new Set(rawEtas)].sort((a, b) => a - b);
                 }
             } catch (err) {}
