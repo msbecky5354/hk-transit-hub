@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="setupTitle">貼地通 - 設定中心</title>
+    <title data-i18n="setupTitle"></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="lang.js?v=32"></script>
-    <script src="config.js?v=32"></script> 
+    <script src="lang.js?v=41"></script>
+    <script src="config.js?v=41"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=32"></script>
-    <script src="api-kmb.js?v=32"></script>
+    <script src="data-static.js?v=41"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
         .color-dot.selected { border-color: #374151; transform: scale(1.1); box-shadow: 0 0 0 2px white inset; }
+        
         .transit-pill { transition: all 0.2s; border: 1.5px solid #e5e7eb; }
-        .transit-pill.selected { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; font-weight: bold; }
+        .transit-pill.selected-red { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; font-weight: bold; }
+        .transit-pill.selected-green { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #15803d !important; font-weight: bold; }
+        .transit-pill.selected-yellow { background-color: #fefce8 !important; border-color: #eab308 !important; color: #a16207 !important; font-weight: bold; }
+        .transit-pill.selected-orange { background-color: #fff7ed !important; border-color: #f97316 !important; color: #c2410c !important; font-weight: bold; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
@@ -27,72 +28,81 @@
     <main class="max-w-lg mx-auto mt-6 px-4">
         
         <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
-            <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group">第一步：設定群組</h2>
+            <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group"></h2>
             <div class="flex flex-col gap-3">
                 <select id="group-select" onchange="checkStep1()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
-                    <option value="" disabled selected data-i18n="selectGroup">請選擇或建立群組...</option>
+                    <option value="" disabled selected data-i18n="selectGroup"></option>
                 </select>
-                <input type="text" id="new-group-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500 hidden-step" data-i18n-placeholder="newGroupPlaceholder" placeholder="請輸入新群組名稱..." onkeyup="checkStep1()">
+                <input type="text" id="new-group-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500 hidden-step" data-i18n-placeholder="newGroupPlaceholder" placeholder="" onkeyup="checkStep1()">
             </div>
         </div>
 
        <div id="step2-area" class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100 hidden-step transition-all">
-            <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step2Select">第二步：選擇交通工具類別</h2>
+            <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step2Select"></h2>
             
-            <div class="grid grid-cols-2 gap-2 mb-4" id="transit-selector">
-                <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
-                    <span class="text-[22px] mb-1">🚌</span>
-                    <span data-i18n="transitBUS">巴士</span>
+            <div class="grid grid-cols-2 gap-3 mb-5" id="transit-selector">
+                <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected-red py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
+                    <div class="h-10 flex items-center justify-center mb-1.5 w-full">
+                        <img src="BUS.png" alt="Bus" class="h-8 object-contain" style="mix-blend-mode: multiply; transform: scale(1.3);">
+                    </div>
+                    <span data-i18n="transitBUS"></span>
                 </button>
-                <button onclick="selectTransit('GMB')" id="pill-GMB" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
-                    <span class="text-[22px] mb-1">🚐</span>
-                    <span data-i18n="transitGMB">小巴</span>
+
+                <button onclick="selectTransit('GMB')" id="pill-GMB" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
+                    <div class="h-10 flex items-center justify-center mb-1.5 w-full">
+                        <img src="MINIBUS.png" alt="Minibus" class="h-8 object-contain" style="mix-blend-mode: multiply; transform: scale(1.3);">
+                    </div>
+                    <span data-i18n="transitGMB_new"></span>
                 </button>
                 
-                <button onclick="selectTransit('MTR')" id="pill-MTR" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
-                    <img src="MTR.png" alt="MTR" class="w-8 h-8 object-contain mb-1" style="transform: scale(1.6); mix-blend-mode: multiply;">
-                    <span data-i18n="transitMTR" class="relative z-10">港鐵</span>
+                <button onclick="selectTransit('MTR')" id="pill-MTR" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50 overflow-hidden">
+                    <div class="h-10 flex items-center justify-center mb-1.5 w-full">
+                        <img src="MTR.png" alt="MTR" class="h-10 object-contain" style="transform: scale(1.6); mix-blend-mode: multiply;">
+                    </div>
+                    <span data-i18n="transitMTR" class="relative z-10"></span>
                 </button>
                 
-                <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-2.5 rounded-lg flex flex-col items-center justify-center text-xs text-gray-500 bg-gray-50">
-                    <i class="fas fa-train-tram text-orange-500 text-2xl mb-1"></i>
-                    <span data-i18n="transitLRT">輕鐵</span>
+                <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
+                    <div class="h-10 flex items-center justify-center mb-1.5 w-full">
+                        <i class="fas fa-train-tram text-orange-500 text-[32px]"></i>
+                    </div>
+                    <span data-i18n="transitLRT"></span>
                 </button>
             </div>
 
             <div id="omni-input-area" class="mb-4">
-                <input type="text" id="route-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:border-red-500 font-bold uppercase text-center tracking-widest" data-i18n-placeholder="searchPlaceholder" placeholder="例如: 112, 46M, B2P">
+                <input type="text" id="route-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-2xl focus:outline-none focus:border-red-500 font-bold uppercase text-center tracking-widest" data-i18n-placeholder="searchPlaceholder" placeholder="">
                 <button onclick="fetchOmniStops()" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg mt-3 hover:bg-red-700 transition text-sm flex justify-center items-center gap-2 shadow-sm">
-                    <span data-i18n="searchBtn">全網智能搜尋 (Omni-Search)</span>
+                    <span data-i18n="searchBtn"></span>
                 </button>
-                <p id="loading-text" class="text-red-500 text-sm mt-2 font-medium text-center hidden-step" data-i18n="loading">大腦全網聯查中...</p>
+                <p id="loading-text" class="text-red-500 text-sm mt-2 font-medium text-center hidden-step" data-i18n="loading"></p>
             </div>
 
             <div id="static-route-area" class="mb-4 hidden-step">
                 <select id="static-route-select" onchange="loadStaticRoute()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-bold focus:outline-none focus:border-red-500 bg-white">
-                    <option value="" disabled selected data-i18n="static_select_placeholder">請選擇綫路 / 航線...</option>
+                    <option value="" disabled selected data-i18n="static_select_placeholder"></option>
                 </select>
             </div>
 
             <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-3">
                 <div class="flex gap-2 mb-3" id="direction-tabs"></div>
                 <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
-                    <option value="" disabled selected data-i18n="selectStop">請選擇上車分站...</option>
+                    <option value="" disabled selected data-i18n="selectStop"></option>
                 </select>
             </div>
         </div>
 
         <div id="setup-area" class="bg-white rounded-xl shadow-sm p-5 border border-red-100 hidden-step transition-all">
             <h2 class="text-sm font-bold text-red-500 mb-4 uppercase tracking-wider flex items-center gap-2">
-                <span>✨</span> <span data-i18n="step4Save">第三步：個人化與儲存</span>
+                <span>✨</span> <span data-i18n="step4Save"></span>
             </h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="aliasLabel"></label>
                     <input type="text" id="alias-input" class="w-full border rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none bg-gray-50 font-medium">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel">顏色標籤</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel"></label>
                     <div class="flex gap-3 mt-2" id="color-picker">
                         <div class="color-dot bg-red-500 selected" data-color="red" onclick="selectColor(this)"></div>
                         <div class="color-dot bg-blue-500" data-color="blue" onclick="selectColor(this)"></div>
@@ -101,7 +111,7 @@
                     </div>
                 </div>
                 <button onclick="saveToDashboard()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-lg mt-4 shadow-md hover:bg-gray-800 transition flex justify-center items-center gap-2">
-                    ✅ <span data-i18n="saveBtn">新增至儀表板</span>
+                    ✅ <span data-i18n="saveBtn"></span>
                 </button>
             </div>
         </div>
@@ -123,12 +133,11 @@
             let existingGroups = [...new Set(routes.map(r => r.group))];
             const defaultGroups = ["groupHome", "groupWork"];
             let allGroups = [...new Set([...defaultGroups, ...existingGroups.filter(g => g !== "🏠 屋企落樓" && g !== "🏠 屋企落楼" && g !== "🏠 Home" && g !== "💼 返工轉車" && g !== "💼 返工转车" && g !== "💼 Commute")])];
-            selectEl.innerHTML = '<option value="" disabled selected data-i18n="selectGroup">請選擇或建立群組...</option>';
-            allGroups.forEach(group => {
-                const displayName = (group === 'groupHome' || group === 'groupWork') ? getTranslation(group, group) : group;
-                selectEl.innerHTML += `<option value="${group}">${displayName}</option>`;
-            });
-            selectEl.innerHTML += `<option value="NEW_GROUP" data-i18n="createNewGroup">+ 建立新群組...</option>`;
+            
+            const placeholder = getTranslation('selectGroup');
+            selectEl.innerHTML = `<option value="" disabled selected data-i18n="selectGroup">${placeholder}</option>`;
+            allGroups.forEach(group => { selectEl.innerHTML += `<option value="${group}">${getTranslation(group, group)}</option>`; });
+            selectEl.innerHTML += `<option value="NEW_GROUP" data-i18n="createNewGroup">${getTranslation('createNewGroup')}</option>`;
         }
 
         function checkStep1() {
@@ -143,10 +152,15 @@
         function selectTransit(type) {
             window.selectedTransit = type;
             const pills = ['BUS', 'GMB', 'MTR', 'LRT'];
+            const allSelectedClasses = ['selected-red', 'selected-green', 'selected-yellow', 'selected-orange'];
+            
             pills.forEach(p => {
                 const element = document.getElementById(`pill-${p}`);
-                if (p === type) { element.classList.add('selected', 'bg-red-50', 'text-red-700', 'border-red-500'); element.classList.remove('text-gray-500', 'bg-gray-50'); }
-                else { element.classList.remove('selected', 'bg-red-50', 'text-red-700', 'border-red-500'); element.classList.add('text-gray-500', 'bg-gray-50'); }
+                element.classList.remove(...allSelectedClasses, 'text-gray-500', 'bg-gray-50');
+                if (p === type) { 
+                    const colorClass = { 'BUS': 'selected-red', 'GMB': 'selected-green', 'MTR': 'selected-yellow', 'LRT': 'selected-orange' }[type];
+                    element.classList.add(colorClass);
+                } else { element.classList.add('text-gray-500', 'bg-gray-50'); }
             });
 
             const inputArea = document.getElementById('omni-input-area');
@@ -156,28 +170,77 @@
             document.getElementById('setup-area').classList.add('hidden-step');
 
             if (['MTR', 'LRT'].includes(type)) {
-                inputArea.classList.add('hidden-step');
-                staticArea.classList.remove('hidden-step');
-                const placeholder = getTranslation('static_select_placeholder', '請選擇綫路 / 航線...');
-                staticSelect.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+                inputArea.classList.add('hidden-step'); staticArea.classList.remove('hidden-step');
+                staticSelect.innerHTML = `<option value="" disabled selected data-i18n="static_select_placeholder">${getTranslation('static_select_placeholder')}</option>`;
                 Object.keys(window.STATIC_DICTIONARY).forEach(key => {
-                    const item = window.STATIC_DICTIONARY[key];
-                    if (item.transitType === type) {
-                        const localizedRoute = getTranslation(item.route_key, key);
-                        staticSelect.innerHTML += `<option value="${key}">${localizedRoute}</option>`;
+                    if (window.STATIC_DICTIONARY[key].transitType === type) {
+                        staticSelect.innerHTML += `<option value="${key}">${getTranslation(window.STATIC_DICTIONARY[key].route_key, key)}</option>`;
                     }
                 });
             } else {
-                inputArea.classList.remove('hidden-step');
-                staticArea.classList.add('hidden-step');
+                inputArea.classList.remove('hidden-step'); staticArea.classList.add('hidden-step');
             }
         }
+
+        window.fetchOmniStops = async function() {
+            const routeInput = document.getElementById('route-input').value.trim().toUpperCase();
+            if (!routeInput) return;
+
+            const loading = document.getElementById('loading-text');
+            loading.classList.remove('hidden-step');
+            const hexColorMap = { 'BUS': '#ef4444', 'GMB': '#22c55e', 'MTR': '#eab308', 'LRT': '#f97316' };
+            loading.style.color = hexColorMap[window.selectedTransit] || '#ef4444';
+            loading.textContent = getTranslation('loading');
+            
+            document.getElementById('stop-selection-ui').classList.add('hidden-step');
+            document.getElementById('setup-area').classList.add('hidden-step');
+
+            try {
+                let baseUrl = window.APP_CONFIG.N8N_BASE_URL.replace(/\/$/, '');
+                if (!baseUrl.endsWith('get-omni-setup')) baseUrl += '/get-omni-setup';
+                const apiUrl = `${baseUrl}?route=${encodeURIComponent(routeInput)}&type=${window.selectedTransit}&v=${Date.now()}`;
+                
+                const response = await fetch(apiUrl, { method: 'GET', headers: { 'x-transit-token': window.APP_CONFIG.N8N_TOKEN, 'Accept': 'application/json' }});
+                if (!response.ok) throw new Error(`Fetch Error (${response.status})`);
+                
+                const json = await response.json();
+                if (json.error) throw new Error(json.error);
+                if (!json.directions || Object.keys(json.directions).length === 0) throw new Error(`找不到路線 ${routeInput}。`);
+
+                // 🛠️ UAT Debug 專用華麗版 Console Log
+                console.groupCollapsed(`%c 🚌 Omni-Search Response: ${routeInput}`, 'background: #222; color: #bada55; font-size: 14px; font-weight: bold; padding: 4px;');
+                console.log('%c Raw JSON:', 'color: #007bff; font-weight: bold;', json);
+                if(json.directions) {
+                    Object.keys(json.directions).forEach(dir => {
+                        console.group(`%c 🛣️ Direction: ${dir}`, 'color: #e83e8c; font-weight: bold;');
+                        console.table(json.directions[dir].stops.map(s => ({
+                            'Stop ID': s.stop_id,
+                            'Name (TC)': s.name_obj ? s.name_obj.tc : 'N/A',
+                            'Name (EN)': s.name_obj ? s.name_obj.en : 'N/A',
+                            'API URL': s.api_url
+                        })));
+                        console.groupEnd();
+                    });
+                }
+                console.groupEnd();
+
+                window.currentRouteData = json;
+                window.currentTransit = json.transitType || window.selectedTransit;
+                window.activeDirection = Object.keys(json.directions)[0];
+                
+                document.getElementById('stop-selection-ui').classList.remove('hidden-step');
+                renderDirectionTabs();
+                renderStopDropdown();
+                loading.classList.add('hidden-step');
+            } catch (err) {
+                loading.textContent = err.message;
+            }
+        };
 
         function loadStaticRoute() {
             const staticKey = document.getElementById('static-route-select').value;
             if (!staticKey) return;
-            const staticData = window.STATIC_DICTIONARY[staticKey];
-            window.currentRouteData = staticData; window.currentTransit = staticData.transitType; window.activeDirection = Object.keys(staticData.directions)[0];
+            window.currentRouteData = window.STATIC_DICTIONARY[staticKey]; window.currentTransit = window.currentRouteData.transitType; window.activeDirection = Object.keys(window.currentRouteData.directions)[0];
             document.getElementById('stop-selection-ui').classList.remove('hidden-step');
             renderDirectionTabs(); renderStopDropdown();
         }
@@ -187,20 +250,36 @@
             if (!container || !window.currentRouteData || !window.currentRouteData.directions) return;
             container.innerHTML = '';
             const directions = window.currentRouteData.directions;
-            const isStatic = ['MTR', 'LRT'].includes(window.currentTransit);
+            
             Object.keys(directions).forEach(key => {
                 const dir = directions[key];
                 let destText = '';
-                if(isStatic) { destText = getTranslation(dir.dest_key, dir.dest_key); }
-                else {
-                   if (dir.dest_name && typeof dir.dest_name === 'object') { destText = dir.dest_name[currentLang] || dir.dest_name['tc'] || "未知方向"; }
-                   else if (dir.dest_name && typeof dir.dest_name === 'string') { destText = dir.dest_name; }
-                   else { destText = dir.dest_key || "未知方向"; }
+                
+                // 🚇 港鐵巴士查字典 (方向)
+                if (window.currentTransit === 'MTR_BUS' && window.MTR_BUS_DICT.ROUTES[window.currentRouteData.route]) {
+                    destText = window.MTR_BUS_DICT.ROUTES[window.currentRouteData.route][currentLang === 'en' ? 'dest_en' : 'dest_tc'] + ' (港鐵)';
+                } else if (dir.dest_name && typeof dir.dest_name === 'object') { 
+                    destText = dir.dest_name[currentLang] || dir.dest_name['tc'] || "未知方向"; 
+                } else if (dir.dest_name && typeof dir.dest_name === 'string') { 
+                    destText = dir.dest_name; 
+                } else { 
+                    destText = dir.dest_key || "未知方向"; 
                 }
+                
                 let label = destText;
-                if (!isStatic && window.currentTransit !== 'GMB' && destText !== "未知方向") { label = currentLang === 'en' ? `To ${destText}` : `往 ${destText}`; }
+                if (!['MTR', 'LRT'].includes(window.currentTransit) && window.currentTransit !== 'GMB' && destText !== "未知方向") { 
+                    label = `${currentLang === 'en' ? 'To ' : '往 '}${destText}`; 
+                }
+                
                 const btn = document.createElement('button');
-                btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition ${window.activeDirection === key ? 'bg-white text-red-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`;
+                let transitKey = window.selectedTransit;
+                if (destText.includes('(龍運)') || destText.includes('(LWB)')) transitKey = 'LWB';
+                if (window.currentTransit === 'MTR_BUS') transitKey = 'MTR'; 
+
+                const themeClasses = { 'BUS': 'text-red-600 border-red-400', 'LWB': 'text-orange-500 border-orange-400', 'GMB': 'text-green-600 border-green-400', 'MTR': 'text-yellow-600 border-yellow-400', 'LRT': 'text-orange-600 border-orange-400' };
+                const activeClasses = `bg-white shadow-sm border ${themeClasses[transitKey] || 'text-red-600 border-red-400'}`;
+                
+                btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
                 btn.textContent = label;
                 btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };
                 container.appendChild(btn);
@@ -212,140 +291,80 @@
             const select = document.getElementById('stop-select');
             if (!stopArea || !select) return;
             
-            select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
+            select.innerHTML = `<option value="" disabled selected data-i18n="selectStop">${getTranslation('selectStop')}</option>`;
             stopArea.classList.remove('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
             
             if (!window.currentRouteData || !window.currentRouteData.directions || !window.activeDirection) return;
             const dirData = window.currentRouteData.directions[window.activeDirection];
             if (!dirData || !dirData.stops || !Array.isArray(dirData.stops)) return;
-            
-            const isStatic = ['MTR', 'LRT'].includes(window.currentTransit);
-
-            if (!isStatic && dirData.stops.length > 0) {
-                const firstStop = dirData.stops[0];
-                
-                const isNameObjEmpty = !firstStop.name_obj || Object.keys(firstStop.name_obj).length === 0;
-                const missingName = !firstStop.name_tc && !firstStop.name_en && isNameObjEmpty;
-                
-                if (missingName) {
-                    select.innerHTML = `<option value="" disabled selected>🔄 正在向政府索取真實站名...</option>`;
-                    select.disabled = true;
-                    
-                    let detectedAgency = window.currentTransit.toUpperCase();
-                    const testStopId = firstStop.stop_id || firstStop.stop;
-                    const routeNo = window.currentRouteData.route;
-
-                    if (testStopId) {
-                        try {
-                            let ctbTest = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${testStopId}`).then(r => r.json()).catch(() => ({}));
-                            if (ctbTest.data && ctbTest.data.name_tc) {
-                                detectedAgency = 'CTB';
-                            } else {
-                                let kmbTest = await fetch(`https://rt.data.gov.hk/v1/transport/kmb/stop/${testStopId}`).then(r => r.json()).catch(() => ({}));
-                                if (kmbTest.data && kmbTest.data.name_tc) {
-                                    detectedAgency = 'KMB';
-                                }
-                            }
-                        } catch (e) {}
-                    }
-
-                    const promises = dirData.stops.map(async (stop) => {
-                        let stopId = stop.stop_id || stop.stop;
-                        if (!stopId) return stop;
-                        
-                        if (!stop.api_url) {
-                            if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
-                                stop.api_url = `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/CTB/${stopId}/${routeNo}`;
-                            } else if (detectedAgency === 'KMB') {
-                                let dirCode = window.activeDirection === 'outbound' ? '1' : '2'; 
-                                stop.api_url = `https://rt.data.gov.hk/v1/transport/kmb/eta/${stopId}/${routeNo}/${dirCode}`;
-                            }
-                        }
-                        
-                        try {
-                            let url = '';
-                            if (detectedAgency === 'CTB' || detectedAgency === 'CITYBUS') {
-                                url = `https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${stopId}`;
-                            } else if (detectedAgency === 'KMB') {
-                                url = `https://rt.data.gov.hk/v1/transport/kmb/stop/${stopId}`;
-                            }
-                            
-                            if (url) {
-                                let res = await fetch(url);
-                                let json = await res.json();
-                                if (json.data) {
-                                    stop.name_tc = json.data.name_tc;
-                                    stop.name_en = json.data.name_en;
-                                    stop.stop_id = stopId;
-                                    stop.name_obj = { tc: json.data.name_tc, en: json.data.name_en, sc: json.data.name_sc || json.data.name_tc };
-                                }
-                            }
-                        } catch (e) {}
-                        
-                        return stop;
-                    });
-                    
-                    await Promise.all(promises);
-                    select.disabled = false;
-                }
-            }
-
-            select.innerHTML = `<option value="" disabled selected>${getTranslation('selectStop', '請選擇上車分站...')}</option>`;
 
             dirData.stops.forEach((stop, index) => {
                 let stopName = '';
-                if(isStatic) { 
-                    stopName = getTranslation(stop.name_key, stop.name_key); 
-                } else {
-                    if (stop.name_obj && stop.name_obj['tc']) { 
-                        stopName = stop.name_obj[currentLang] || stop.name_obj['tc']; 
+                // 🚇 港鐵巴士查字典 (車站)
+                if (window.currentTransit === 'MTR_BUS') {
+                    if (window.MTR_BUS_DICT.STOPS[stop.stop_id]) {
+                        stopName = window.MTR_BUS_DICT.STOPS[stop.stop_id][currentLang === 'en' ? 'en' : 'tc'];
+                    } else {
+                        stopName = `站點 ${index + 1} (${stop.stop_id})`; 
                     }
-                    else if (stop.name_tc || stop.name_en) { 
-                        stopName = currentLang === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); 
-                    }
-                    else if (stop.stop_name && typeof stop.stop_name === 'string') { stopName = stop.stop_name; }
-                    else if (stop.name) { stopName = stop.name; }
-                    else { stopName = stop.name_key || stop.stop_id || stop.stop || `分站 ${index + 1}`; }
+                } else if (stop.name_obj && stop.name_obj['tc']) { 
+                    stopName = stop.name_obj[currentLang] || stop.name_obj['tc']; 
+                } else if (stop.name_tc || stop.name_en) { 
+                    stopName = currentLang === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); 
+                } else { 
+                    stopName = stop.name_key || stop.stop_id || stop.stop || `Stop ${index + 1}`; 
                 }
+                
                 const opt = document.createElement('option');
                 opt.value = JSON.stringify(stop); 
                 opt.textContent = stopName; 
                 select.appendChild(opt);
             });
+            translatePage();
         }
 
         function showSetupForm() {
             document.getElementById('setup-area').classList.remove('hidden-step');
-            const stopData = JSON.parse(document.getElementById('stop-select').value);
+            const select = document.getElementById('stop-select');
+            const stopData = JSON.parse(select.value);
             const localizedRoute = window.currentRouteData.route_key ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route;
-            let stopNameLocal = "";
-            if (stopData.name_key) { stopNameLocal = getTranslation(stopData.name_key); }
-            else if (stopData.name_obj) { stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc']; }
+            let stopNameLocal = select.options[select.selectedIndex].text; 
             document.getElementById('alias-input').value = `${localizedRoute} (${stopNameLocal})`;
         }
 
-        function checkStep2() { const selectVal = document.getElementById('stop-select').value; if(selectVal) { showSetupForm(); } else { document.getElementById('setup-area').classList.add('hidden-step'); } }
+        function checkStep2() { const select = document.getElementById('stop-select'); if(select.value) { showSetupForm(); } else { document.getElementById('setup-area').classList.add('hidden-step'); } }
         function selectColor(element) { document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected')); element.classList.add('selected'); window.selectedColor = element.getAttribute('data-color'); }
+        
         function saveToDashboard() {
-            const stopData = JSON.parse(document.getElementById('stop-select').value);
+            const select = document.getElementById('stop-select');
+            const stopData = JSON.parse(select.value);
             const aliasInput = document.getElementById('alias-input').value.trim();
             const colorMap = { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#10b981', 'purple': '#8b5cf6' };
             const localizedRoute = window.currentRouteData.route_key ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route;
-            let stopNameLocal = "";
-            if (stopData.name_key) { stopNameLocal = getTranslation(stopData.name_key); }
-            else if (stopData.name_obj) { stopNameLocal = stopData.name_obj[currentLang] || stopData.name_obj['tc']; }
+            
+            let stopNameLocal = select.options[select.selectedIndex].text;
             const defaultAlias = `${localizedRoute} (${stopNameLocal})`;
             const isCustom = (aliasInput !== defaultAlias && aliasInput !== "");
             const savedAlias = isCustom ? aliasInput : "";
 
+            let finalTransitType = window.currentTransit.toUpperCase();
+            if (finalTransitType === 'BUS') {
+                const destName = window.currentRouteData.directions[window.activeDirection].dest_name.tc || "";
+                if (destName.includes('九巴')) finalTransitType = 'KMB';
+                else if (destName.includes('龍運')) finalTransitType = 'LWB';
+                else if (destName.includes('城巴')) finalTransitType = 'CTB';
+                else if (destName.includes('嶼巴')) finalTransitType = 'NLB';
+            }
+
             const newRouteConfig = {
-                id: `item_${Date.now()}`, group: window.selectedGroup, transitType: window.currentTransit.toUpperCase(), route: window.currentRouteData.route,
+                id: `item_${Date.now()}`, group: window.selectedGroup, transitType: finalTransitType, route: window.currentRouteData.route,
                 route_key: window.currentRouteData.route_key || null, stop_id: stopData.stop_id,
                 dest_key: window.currentRouteData.directions[window.activeDirection].dest_key || null, dest_name: window.currentRouteData.directions[window.activeDirection].dest_name || null,
                 stop_key: stopData.name_key || null, stop_name: stopData.name_obj || null, alias: savedAlias, isCustomAlias: isCustom,
                 color: colorMap[window.selectedColor] || '#ef4444', apiUrl: stopData.api_url, time: 'ALL_DAY'
             };
+            
             let dashboardRoutes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
             dashboardRoutes.push(newRouteConfig); localStorage.setItem('hk_transit_routes', JSON.stringify(dashboardRoutes));
             window.location.href = 'index.html'; 
