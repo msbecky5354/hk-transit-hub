@@ -39,7 +39,10 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>基礎操作 (Basic Usage)",
         manualAddTitle: "新增路線 (Add Routes)", manualAddDesc: "點擊底部 <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> 新增</strong> 進入設定中心，選擇交通工具、搜尋路線，並將其釘選到你的儀表板。",
         manualDragTitle: "排序與整理 (Drag & Reorder)", manualDragDesc: "在儀表板中，長按群組標題旁邊的 <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> 或卡片右側的 <i class='fas fa-bars text-gray-400 mx-1'></i>，即可上下拖曳，將最常用的路線排在最頂。",
-        manualDelTitle: "刪除路線 (Swipe to Delete)", manualDelDesc: "將不想要的路線卡片向左滑動 <strong>(Swipe Left)</strong>，垃圾桶圖示便會出現，再次點擊即可刪除。你亦可以直接點擊群組標題旁的垃圾桶 <i class='fas fa-trash-can text-red-500 mx-1'></i> 刪除整個群組。",
+        
+        // 👇 重點更新：第 3 點加入編輯功能
+        manualDelTitle: "編輯與刪除路線 (Edit & Delete)", manualDelDesc: "將路線卡片向左滑動 <strong>(Swipe Left)</strong>，即可喚出隱藏選單。點擊 <i class='fas fa-pen text-gray-400 mx-1'></i> 可為路線自訂專屬花名；點擊紅色垃圾桶即可刪除。你亦可點擊群組標題旁的 <i class='fas fa-trash-can text-red-500 mx-1'></i> 一鍵刪除整個群組。",
+        
         manualBackupTitle: "數據備份 (Backup Data)", manualBackupDesc: "點擊底部 <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> 設定</strong>，你可以隨時將目前的路線佈局匯出成 JSON 檔案。日後更換手機或清理瀏覽器數據後，只需匯入該檔案即可瞬間復原。",
         
         // Share App
@@ -89,7 +92,10 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>基础操作 (Basic Usage)",
         manualAddTitle: "新增路线 (Add Routes)", manualAddDesc: "点击底部 <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> 新增</strong> 进入设定中心，选择交通工具、搜寻路线，并将其钉选到你的仪表板。",
         manualDragTitle: "排序与整理 (Drag & Reorder)", manualDragDesc: "在仪表板中，长按群组标题旁边的 <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> 或卡片右侧的 <i class='fas fa-bars text-gray-400 mx-1'></i>，即可上下拖曳，将最常用的路线排在最顶。",
-        manualDelTitle: "删除路线 (Swipe to Delete)", manualDelDesc: "将不想要的路线卡片向左滑动 <strong>(Swipe Left)</strong>，垃圾桶图示便会出现，再次点击即可删除。你亦可以直接点击群组标题旁的垃圾桶 <i class='fas fa-trash-can text-red-500 mx-1'></i> 删除整个群组。",
+        
+        // 👇 重點更新：第 3 點加入編輯功能
+        manualDelTitle: "编辑与删除路线 (Edit & Delete)", manualDelDesc: "将路线卡片向左滑动 <strong>(Swipe Left)</strong>，即可唤出隐藏选单。点击 <i class='fas fa-pen text-gray-400 mx-1'></i> 可为路线自订专属花名；点击红色垃圾桶即可删除。你亦可点击群组标题旁的 <i class='fas fa-trash-can text-red-500 mx-1'></i> 一键删除整个群组。",
+        
         manualBackupTitle: "数据备份 (Backup Data)", manualBackupDesc: "点击底部 <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> 设定</strong>，你可以随时将目前的路线布局汇出成 JSON 档案。日后更换手机或清理浏览器数据后，只需汇入该档案即可瞬间复原。",
         
         // Share App
@@ -139,7 +145,10 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>Basic Usage",
         manualAddTitle: "Add Routes", manualAddDesc: "Tap <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> Add</strong> at the bottom to enter the Setup Hub. Select your transit type, search for a route, and pin it to your dashboard.",
         manualDragTitle: "Drag & Reorder", manualDragDesc: "On the dashboard, long-press the <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> next to a group title or <i class='fas fa-bars text-gray-400 mx-1'></i> on a card to drag and reorder them to your preference.",
-        manualDelTitle: "Swipe to Delete", manualDelDesc: "<strong>Swipe Left</strong> on any route card to reveal the trash icon for deletion. You can also tap the trash icon <i class='fas fa-trash-can text-red-500 mx-1'></i> next to a group title to delete the entire group at once.",
+        
+        // 👇 重點更新：第 3 點加入編輯功能
+        manualDelTitle: "Edit & Delete Routes", manualDelDesc: "<strong>Swipe Left</strong> on any route card to reveal the hidden menu. Tap <i class='fas fa-pen text-gray-400 mx-1'></i> to customize the route alias, or tap the red trash icon to delete it. You can also tap the <i class='fas fa-trash-can text-red-500 mx-1'></i> next to a group title to delete the entire group.",
+        
         manualBackupTitle: "Backup Data", manualBackupDesc: "Tap <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> Setup</strong> to export your current dashboard layout as a JSON file. If you switch phones, simply import this file to restore everything instantly.",
         
         // Share App
@@ -156,41 +165,29 @@ const langDict = {
 function translatePage() {
     document.querySelectorAll('[data-i18n]').forEach(el => { 
         const key = el.getAttribute('data-i18n'); 
-        if (langDict[currentLang] && langDict[currentLang][key]) { 
-            el.innerHTML = langDict[currentLang][key]; 
-        } 
+        if (langDict[currentLang] && langDict[currentLang][key]) { el.innerHTML = langDict[currentLang][key]; } 
     });
-    
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { 
         const key = el.getAttribute('data-i18n-placeholder'); 
-        if (langDict[currentLang] && langDict[currentLang][key]) { 
-            el.setAttribute('placeholder', langDict[currentLang][key]); 
-        } 
+        if (langDict[currentLang] && langDict[currentLang][key]) { el.setAttribute('placeholder', langDict[currentLang][key]); } 
     });
-
     document.querySelectorAll('[data-i18n-title]').forEach(el => { 
         const key = el.getAttribute('data-i18n-title'); 
-        if (langDict[currentLang] && langDict[currentLang][key]) { 
-            el.setAttribute('title', langDict[currentLang][key]); 
-        } 
+        if (langDict[currentLang] && langDict[currentLang][key]) { el.setAttribute('title', langDict[currentLang][key]); } 
     });
 }
 
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('transit_app_lang', lang);
-    
     if (typeof loadExistingGroups === 'function') loadExistingGroups(); 
     if (typeof renderDirectionTabs === 'function' && window.currentRouteData) { renderDirectionTabs(); renderStopDropdown(); }
     if (typeof initDashboard === 'function') initDashboard(); 
-    
     translatePage();
-    
     document.querySelectorAll('.lang-btn').forEach(btn => { 
         btn.classList.remove('text-[#B8860B]', 'text-yellow-300', 'text-white', 'font-bold'); 
         btn.classList.add('text-gray-400'); 
     });
-    
     const activeBtn = document.getElementById(`btn-${lang}`);
     if(activeBtn) { 
         activeBtn.classList.remove('text-gray-400'); 
