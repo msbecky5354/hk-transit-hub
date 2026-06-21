@@ -1,26 +1,28 @@
-// footer.js - 統一全站 Footer、底部導覽列與免責聲明彈窗
+// footer.js
 function renderFooter() {
     
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-    const isIndex = currentPath === 'index.html' || currentPath === '';
-    const isSetup = currentPath === 'setup.html';
+    
+    const isIndex = false; 
+    const isSetup = currentPath === 'setup.html' || currentPath === 'index.html' || currentPath === '';
     const isSettings = currentPath === 'settings.html' || currentPath === 'manual.html';
 
+    // 👇 轉回白底，選中嘅 Icon 變深金色
     const bottomNavHtml = `
-        <footer class="fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[100] pb-safe" style="padding-bottom: env(safe-area-inset-bottom);">
+        <footer class="fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[100] pb-safe transition-colors duration-300" style="padding-bottom: env(safe-area-inset-bottom);">
             <div class="flex justify-around items-center p-3">
-                <a href="index.html" class="flex flex-col items-center transition ${isIndex ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}">
-                    <span class="text-xl mb-1">📊</span>
+                <a href="index.html" class="flex flex-col items-center transition-all duration-200 ${isIndex ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
+                    <i class="fas fa-chart-simple text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navHome">儀表板</span>
                 </a>
                 
-                <a href="setup.html" class="flex flex-col items-center transition ${isSetup ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}">
-                    <span class="text-xl mb-1">➕</span>
+                <a href="setup.html" class="flex flex-col items-center transition-all duration-200 ${isSetup ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
+                    <i class="fas fa-circle-plus text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navAdd">新增</span>
                 </a>
 
-                <a href="settings.html" class="flex flex-col items-center transition ${isSettings ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}">
-                    <span class="text-xl mb-1">⚙️</span>
+                <a href="settings.html" class="flex flex-col items-center transition-all duration-200 ${isSettings ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
+                    <i class="fas fa-gear text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navSetup">設定</span>
                 </a>
             </div>
@@ -30,14 +32,14 @@ function renderFooter() {
     const copyHtml = `
     <div class="text-center pt-6 pb-24 flex-none w-full z-20 relative"> 
         <button onclick="document.getElementById('disclaimerModal').classList.remove('hidden');" 
-                class="text-[11px] text-red-500 hover:text-red-600 underline decoration-red-200 transition" data-i18n="footerDisclaimerBtn">
+                class="text-[11px] text-[#B8860B] hover:text-yellow-700 underline decoration-yellow-600/30 transition" data-i18n="footerDisclaimerBtn">
             關於我們、條款及免責聲明
         </button>
         <div class="text-[10px] text-gray-500 mt-1.5 tracking-wide flex items-center justify-center transition-colors">
             <span data-i18n="footerCopyright">© 2026 貼地通</span> 
             <span class="mx-1.5">|</span> 
             <span data-i18n="footerDevTeam">開發團隊: </span>
-            <a href="https://www.facebook.com/share/18j3qqx64K/?mibextid=wwXIfr" target="_blank" class="text-red-600 hover:text-red-700 underline transition cursor-pointer ml-1" data-i18n="footerDevName">懶人工具駅</a>
+            <a href="https://www.facebook.com/share/18j3qqx64K/?mibextid=wwXIfr" target="_blank" class="text-[#B8860B] hover:text-yellow-700 underline transition cursor-pointer ml-1" data-i18n="footerDevName">懶人工具駅</a>
         </div>
     </div>
     `;
@@ -54,7 +56,7 @@ function renderFooter() {
                 <p data-i18n="modalP2"><strong>2. 僅供參考：</strong>本程式的資訊僅供參考之用。強烈建議使用者提早出門，開發團隊對因依賴本程式資訊而導致的任何延誤、損失或不便，概不負責。</p>
                 <p data-i18n="modalP3"><strong>3. 隱私與數據安全：</strong>本程式採用無伺服器 (Serverless) 架構，所有路線設定均儲存於您的設備瀏覽器本地端。我們不會收集、上傳或分享您的個人位置或乘車習慣。</p>
             </div>
-            <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="mt-4 w-full bg-red-600 text-white font-bold py-3.5 rounded-2xl active:scale-95 transition-transform text-[15px] shadow-md shadow-red-100" data-i18n="modalBtn">我明白及接受</button>
+            <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="mt-4 w-full bg-[#B8860B] text-white font-bold py-3.5 rounded-2xl active:scale-95 transition-transform text-[15px] shadow-md shadow-yellow-600/30" data-i18n="modalBtn">我明白及接受</button>
         </div>
     </div>
     `;

@@ -159,14 +159,17 @@ function setLang(lang) {
     
     translatePage();
     
+   // 替換 lang.js 內 setLang() 嘅最底部：
     document.querySelectorAll('.lang-btn').forEach(btn => { 
-        btn.classList.remove('text-white', 'font-bold'); 
-        btn.classList.add('text-red-300'); 
+        // 大掃除：清走舊嘅黃字/白字
+        btn.classList.remove('text-[#B8860B]', 'text-yellow-300', 'text-white', 'font-bold'); 
+        btn.classList.add('text-gray-400'); // 變回淺灰色
     });
+    
     const activeBtn = document.getElementById(`btn-${lang}`);
     if(activeBtn) { 
-        activeBtn.classList.remove('text-red-300'); 
-        activeBtn.classList.add('text-white', 'font-bold'); 
+        activeBtn.classList.remove('text-gray-400'); 
+        activeBtn.classList.add('text-[#B8860B]', 'font-bold'); // 選中變深金色！
     }
 }
 

@@ -14,6 +14,26 @@ if (localStorage.getItem('custom_n8n_token')) {
 
 window.APP_CONFIG = APP_CONFIG;
 
+
+// ==========================================
+// 📱 PWA 全域動態注入 (Single Source of Truth)
+// ==========================================
+(function injectPWATags() {
+    if (document.querySelector('link[rel="manifest"]')) return;
+
+    const pwaMetaHtml = `
+        <link rel="manifest" href="manifest.json">
+        <link rel="icon" type="image/png" href="icon-192.png">
+        
+        <meta name="theme-color" content="#dc2626">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Transit Hub">
+        <link rel="apple-touch-icon" href="icon-192.png">
+    `;
+    document.head.insertAdjacentHTML('beforeend', pwaMetaHtml);
+})();
+
 // ==========================================
 // 🎨 全站字體升級 (Google Noto Sans HK 思源黑體)
 // ==========================================
@@ -41,4 +61,23 @@ window.APP_CONFIG = APP_CONFIG;
         }
     `;
     document.head.appendChild(style);
-})();
+})(); // ⬅️ 這裡正確關閉字體注入模塊
+
+// ==========================================
+// 📱 PWA 全域動態注入 (Single Source of Truth)
+// ==========================================
+(function injectPWATags() {
+    // 防禦機制：若頁面已存在 manifest，則不重複注入，避免 DOM 污染
+    if (document.querySelector('link[rel="manifest"]')) return;
+
+    const pwaMetaHtml = `
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#dc2626">
+        
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Transit Hub">
+        <link rel="apple-touch-icon" href="icon-192.png">
+    `;
+    document.head.insertAdjacentHTML('beforeend', pwaMetaHtml);
+})(); // ⬅️ 這裡是完全獨立的 PWA 注入模塊
