@@ -6,16 +6,15 @@
     <title data-i18n="setupTitle"></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="lang.js?v=61"></script>
-    <script src="config.js?v=61"></script> 
+    <script src="lang.js?v=62"></script>
+    <script src="config.js?v=62"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=61"></script>
+    <script src="data-static.js?v=62"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
         .color-dot.selected { border-color: #374151; transform: scale(1.1); box-shadow: 0 0 0 2px white inset; }
-        
         .transit-pill { transition: all 0.2s; border: 1.5px solid #e5e7eb; }
         .transit-pill.selected-red { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; font-weight: bold; }
         .transit-pill.selected-green { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #15803d !important; font-weight: bold; }
@@ -39,7 +38,6 @@
 
        <div id="step2-area" class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100 hidden-step transition-all">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step2Select"></h2>
-            
             <div class="grid grid-cols-2 gap-3 mb-5" id="transit-selector">
                 <button onclick="selectTransit('BUS')" id="pill-BUS" class="transit-pill selected-red py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
                     <div class="h-10 flex items-center justify-center mb-1.5 w-full">
@@ -47,21 +45,18 @@
                     </div>
                     <span data-i18n="transitBUS"></span>
                 </button>
-
                 <button onclick="selectTransit('GMB')" id="pill-GMB" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
                     <div class="h-10 flex items-center justify-center mb-1.5 w-full">
                         <img src="MINIBUS.png" alt="Minibus" class="h-8 object-contain" style="mix-blend-mode: multiply; transform: scale(1.3);">
                     </div>
                     <span data-i18n="transitGMB_new"></span>
                 </button>
-                
                 <button onclick="selectTransit('MTR')" id="pill-MTR" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50 overflow-hidden">
                     <div class="h-10 flex items-center justify-center mb-1.5 w-full">
                         <img src="MTR.png" alt="MTR" class="h-10 object-contain" style="transform: scale(1.6); mix-blend-mode: multiply;">
                     </div>
                     <span data-i18n="transitMTR" class="relative z-10"></span>
                 </button>
-                
                 <button onclick="selectTransit('LRT')" id="pill-LRT" class="transit-pill py-3 rounded-xl flex flex-col items-center justify-center text-sm text-gray-500 bg-gray-50">
                     <div class="h-10 flex items-center justify-center mb-1.5 w-full">
                         <i class="fas fa-train-tram text-orange-500 text-[32px]"></i>
@@ -118,9 +113,11 @@
         </div>
     </main>
     <div id="app-footer"></div>
+    
     <script>
         window.selectedGroup = ""; window.selectedTransit = "BUS"; window.currentTransit = "";
         window.currentRouteData = null; window.activeDirection = ''; window.selectedColor = 'red';
+        window.MTR_CSV_DICT = {}; // 👇 呢個就係儲存 CSV 翻譯嘅大腦
         
         if (typeof window.CTB_DICT_CACHE === 'undefined') { window.CTB_DICT_CACHE = {}; }
 
@@ -128,7 +125,41 @@
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
             loadExistingGroups();
+            loadMtrCsvData(); // 一開網頁即刻讀取 CSV！
         };
+
+        // 👇 自動讀取 CSV 並轉換為系統可讀嘅字典
+        async function loadMtrCsvData() {
+            try {
+                // 確保檔案路徑正確，假設 mtr_lines_and_stations.csv 放喺 data/ 資料夾
+                const res = await fetch('data/mtr_lines_and_stations.csv');
+                if (!res.ok) return;
+                const text = await res.text();
+                const lines = text.split('\n');
+                if (lines.length < 2) return;
+
+                const headers = lines[0].split(',').map(h => h.trim());
+                const codeIdx = headers.indexOf('Station Code');
+                const tcIdx = headers.indexOf('Chinese Name');
+                const enIdx = headers.indexOf('English Name');
+
+                if (codeIdx === -1 || tcIdx === -1 || enIdx === -1) return;
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const cols = lines[i].split(',');
+                    const code = cols[codeIdx]?.trim();
+                    const tc = cols[tcIdx]?.trim();
+                    const en = cols[enIdx]?.trim();
+                    if (code && tc) {
+                        // 建立字典：如果搵到 Code，就儲存繁簡英翻譯
+                        window.MTR_CSV_DICT[code] = { tc: tc, sc: tc, en: (en || tc) }; 
+                    }
+                }
+            } catch (e) {
+                console.warn("未能讀取 CSV，將使用 API 預設名稱。", e);
+            }
+        }
 
         function loadExistingGroups() {
             const selectEl = document.getElementById('group-select');
@@ -175,13 +206,27 @@
 
             if (['MTR', 'LRT'].includes(type)) {
                 inputArea.classList.add('hidden-step'); staticArea.classList.remove('hidden-step');
-                const placeholder = typeof getTranslation === 'function' ? getTranslation('static_select_placeholder') : '請選擇綫路 / 航線...';
-                staticSelect.innerHTML = `<option value="" disabled selected data-i18n="static_select_placeholder">${placeholder}</option>`;
                 
+                const placeholderKey = type === 'MTR' ? 'placeholderMTR' : 'placeholderLRT';
+                const fallbackText = type === 'MTR' ? '請選擇港鐵路線...' : '請選擇輕鐵路線...';
+                const placeholderText = typeof getTranslation === 'function' ? getTranslation(placeholderKey, fallbackText) : fallbackText;
+                
+                staticSelect.innerHTML = `<option value="" disabled selected data-i18n="${placeholderKey}">${placeholderText}</option>`;
+                
+                const mtrEmojiMap = {
+                    'TKL': '🟣 ', 'ISL': '🔵 ', 'TWL': '🔴 ', 'KTL': '🟢 ', 
+                    'TCL': '🟠 ', 'SIL': '🟡 ', 'TML': '🤎 ', 'EAL': '🩵 ', 
+                    'DRL': '🐭 ', 'AEL': '✈️ ' 
+                };
+
                 Object.keys(window.STATIC_DICTIONARY).forEach(key => {
                     if (window.STATIC_DICTIONARY[key].transitType === type) {
-                        // 🔥 直接讀取大腦中原汁原味的 615 純數字顯示
                         let displayName = (type === 'LRT') ? window.STATIC_DICTIONARY[key].route : (typeof getTranslation === 'function' ? getTranslation(window.STATIC_DICTIONARY[key].route_key, key) : key);
+                        
+                        if (type === 'MTR' && mtrEmojiMap[key]) {
+                            displayName = mtrEmojiMap[key] + displayName;
+                        }
+                        
                         staticSelect.innerHTML += `<option value="${key}">${displayName}</option>`;
                     }
                 });
@@ -290,13 +335,9 @@
             if (!staticKey) return;
             window.currentRouteData = window.STATIC_DICTIONARY[staticKey]; 
             
-            // 🔥 移除舊版錯誤邏輯 (不再將 route 錯誤覆蓋成系統 ID)
-            // window.currentRouteData.route = staticKey; 
-            
             window.currentTransit = window.currentRouteData.transitType; 
             window.activeDirection = Object.keys(window.currentRouteData.directions)[0];
             
-            // 自動為輕鐵/重鐵選擇對應顏色
             if (window.currentTransit === 'LRT') {
                 const orangeDot = document.querySelector('.color-dot[data-color="orange"]');
                 if (orangeDot) selectColor(orangeDot);
@@ -318,9 +359,13 @@
             Object.keys(directions).forEach(key => {
                 const dir = directions[key];
                 let destText = '';
+                const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
                 
-                if (dir.dest_name && typeof dir.dest_name === 'object') { 
-                    destText = dir.dest_name[typeof currentLang !== 'undefined' ? currentLang : 'tc'] || dir.dest_name['tc'] || "未知方向"; 
+                // 👇 方向標籤優先使用 CSV 翻譯！
+                if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[dir.dest_key]) {
+                    destText = window.MTR_CSV_DICT[dir.dest_key][langKey];
+                } else if (dir.dest_name && typeof dir.dest_name === 'object') { 
+                    destText = dir.dest_name[langKey] || dir.dest_name['tc'] || "未知方向"; 
                 } else if (dir.dest_name && typeof dir.dest_name === 'string') { 
                     destText = dir.dest_name; 
                 } else { 
@@ -329,7 +374,7 @@
                 
                 let label = destText;
                 if (!['MTR', 'LRT'].includes(window.currentTransit) && window.currentTransit !== 'GMB' && destText !== "未知方向") { 
-                    label = `${(typeof currentLang !== 'undefined' && currentLang === 'en') ? 'To ' : '往 '}${destText}`; 
+                    label = `${langKey === 'en' ? 'To ' : '往 '}${destText}`; 
                 }
                 
                 const btn = document.createElement('button');
@@ -363,10 +408,15 @@
 
             dirData.stops.forEach((stop, index) => {
                 let stopName = '';
-                if (stop.name_obj && stop.name_obj['tc']) { 
-                    stopName = stop.name_obj[typeof currentLang !== 'undefined' ? currentLang : 'tc'] || stop.name_obj['tc']; 
+                const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
+
+                // 👇 站點下拉選單優先使用 CSV 翻譯！
+                if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[stop.stop_id]) {
+                    stopName = window.MTR_CSV_DICT[stop.stop_id][langKey];
+                } else if (stop.name_obj && stop.name_obj[langKey]) { 
+                    stopName = stop.name_obj[langKey]; 
                 } else if (stop.name_tc || stop.name_en) { 
-                    stopName = (typeof currentLang !== 'undefined' && currentLang === 'en') ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); 
+                    stopName = langKey === 'en' ? (stop.name_en || stop.name_tc) : (stop.name_tc || stop.name_en); 
                 } else { 
                     stopName = stop.name_key || stop.stop_id || stop.stop || `Stop ${index + 1}`; 
                 }
@@ -383,7 +433,6 @@
             document.getElementById('setup-area').classList.remove('hidden-step');
             const select = document.getElementById('stop-select');
             
-            // 🔥 直接顯示大腦入面嘅純數字 615
             let localizedRoute = window.currentRouteData.route_key ? (typeof getTranslation === 'function' ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route) : window.currentRouteData.route;
             if (window.currentRouteData.transitType === 'LRT') localizedRoute = window.currentRouteData.route;
             
@@ -418,6 +467,7 @@
                 else if (destName.includes('港鐵')) finalTransitType = 'MTR'; 
             }
 
+            
             const newRouteConfig = {
                 id: `item_${Date.now()}`, group: window.selectedGroup, transitType: finalTransitType, route: window.currentRouteData.route,
                 route_key: window.currentRouteData.route_key || null, stop_id: stopData.stop_id,

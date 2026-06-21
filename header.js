@@ -35,7 +35,6 @@ function renderHeader() {
     if (headerContainer) {
         headerContainer.innerHTML = headerHtml;
         
-        // 👇 高亮顏色轉為深金色 #B8860B，因為白底用亮黃色會睇唔清
         setTimeout(() => {
             const currentLang = localStorage.getItem('transit_app_lang') || 'tc';
             document.querySelectorAll('.lang-btn').forEach(btn => { 
@@ -55,18 +54,26 @@ function renderHeader() {
     }
 }
 
+// 支援三文兩語的分享功能
 window.shareApp = function() {
+    // 從 lang.js 動態獲取標題和內容
+    const shareTitle = typeof getTranslation === 'function' ? getTranslation('appName', '貼地通 HK Transit Hub') : '貼地通 HK Transit Hub';
+    const shareDesc = typeof getTranslation === 'function' ? getTranslation('shareText', '極速、零廣告的香港交通 ETA 儀表板！') : '極速、零廣告的香港交通 ETA 儀表板！';
+    
     const shareData = {
-        title: '貼地通 HK Transit Hub',
-        text: '即時香港交通到站時間儀表板！',
+        title: shareTitle,
+        text: shareDesc,
         url: window.location.origin + window.location.pathname
     };
 
     if (navigator.share) {
+        // 手機原生分享
         navigator.share(shareData).catch(err => console.log('Share cancelled', err));
     } else {
+        // 電腦版或不支援原生分享時，複製連結並彈出已翻譯的提示
         navigator.clipboard.writeText(shareData.url).then(() => {
-            alert('連結已複製！ Link copied to clipboard!');
+            const alertMsg = typeof getTranslation === 'function' ? getTranslation('linkCopied', '🔗 連結已複製到剪貼簿！') : '🔗 連結已複製到剪貼簿！';
+            alert(alertMsg);
         });
     }
 };
