@@ -3,24 +3,29 @@ function renderFooter() {
     
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
     
-    const isIndex = false; 
-    const isSetup = currentPath === 'setup.html' || currentPath === 'index.html' || currentPath === '';
+    // 👇 核心修改：反轉高亮邏輯 (Call to Action 模式)
+    // 喺 setup.html 嗰陣，isIndex 變 true (著儀表板)
+    // 喺 index.html 嗰陣，isSetup 變 true (著新增)
+    const isIndex = currentPath === 'setup.html'; 
+    const isSetup = currentPath === 'index.html' || currentPath === '';
     const isSettings = currentPath === 'settings.html' || currentPath === 'manual.html';
 
-    // 👇 轉回白底，選中嘅 Icon 變深金色
     const bottomNavHtml = `
         <footer class="fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[100] pb-safe transition-colors duration-300" style="padding-bottom: env(safe-area-inset-bottom);">
             <div class="flex justify-around items-center p-3">
+                <!-- 儀表板 (Dashboard) -->
                 <a href="index.html" class="flex flex-col items-center transition-all duration-200 ${isIndex ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-chart-simple text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navHome">儀表板</span>
                 </a>
                 
+                <!-- 新增 (Setup) -->
                 <a href="setup.html" class="flex flex-col items-center transition-all duration-200 ${isSetup ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-circle-plus text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navAdd">新增</span>
                 </a>
 
+                <!-- 設定 (Settings) -->
                 <a href="settings.html" class="flex flex-col items-center transition-all duration-200 ${isSettings ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-gear text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navSetup">設定</span>
