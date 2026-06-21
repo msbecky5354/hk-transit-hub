@@ -1,6 +1,7 @@
 // config.js 
 const APP_CONFIG = {
-    N8N_BASE_URL: "https://n8n-hk-transit.pikapod.net/webhook",
+    // 🚨 已經幫你將 API 網址換做你真正運行緊嘅 passionate-jerboa
+    N8N_BASE_URL: "https://passionate-jerboa.pikapod.net/webhook",
     N8N_TOKEN: "PhFhsEfKlOxtRJxn"
 };
 
