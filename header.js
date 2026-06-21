@@ -1,69 +1,63 @@
 function renderHeader() {
     const headerHtml = `
     <style>
-        /* 走馬燈專用動畫 (上下滾動) */
-        @keyframes scroll-up {
-            0% { transform: translateY(100%); }
-            10% { transform: translateY(0); } /* 快速進入並停留 */
-            90% { transform: translateY(0); } /* 停留時間 */
-            100% { transform: translateY(-100%); } /* 快速離開 */
-        }
-        
-        /* 走馬燈專用動畫 (左右滾動 - 預設) */
+        /* 走馬燈專用動畫 */
         @keyframes scroll-left {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-150%); }
         }
-        
         .animate-scroll {
             display: inline-block;
             white-space: nowrap;
-            /* 預設使用左右滾動，如果你想轉做上下，請將下面改為 scroll-up */
-            animation: scroll-left 25s linear infinite; 
+            animation: scroll-left 25s linear infinite;
         }
-        
         /* 左右兩側漸變遮罩，令文字出入時有漸隱效果 */
         .weather-ticker-container {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
         }
-        
         /* 隱藏原生捲軸 */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 
-    <header class="bg-white text-gray-800 px-3 py-2 shadow-sm border-b border-gray-100 flex items-center justify-between sticky top-0 z-[100] transition-colors duration-300 gap-2 h-14">
+    <header class="bg-white text-gray-800 p-2 shadow-sm border-b border-gray-100 flex flex-col sticky top-0 z-[100] transition-colors duration-300">
         
-        <div class="flex items-center shrink-0 h-full cursor-pointer" onclick="window.location.href='index.html'">
-            <img src="HKTH.png" alt="HK Transit Hub" class="h-9 w-auto object-contain">
+        <!-- 上層：Logo、特別天氣消息、按鈕 -->
+        <div class="flex justify-between items-center w-full mb-1 h-10 gap-1">
+            
+            <!-- 左側：Logo -->
+            <div class="flex items-center shrink-0 h-full cursor-pointer pl-1" onclick="window.location.href='index.html'">
+                <img src="HKTH.png" alt="HK Transit Hub" class="h-9 w-auto object-contain">
+            </div>
+
+            <!-- 中間：特別天氣預警 (專注於突發/簡短消息，適合手機窄螢幕) -->
+            <div id="special-weather-container" class="flex-1 min-w-0 flex items-center justify-center overflow-hidden px-1 h-full opacity-0 transition-opacity duration-500">
+                <!-- 內容會由 fetchSpecialNews 動態載入 -->
+            </div>
+            
+            <!-- 右側：按鈕 -->
+            <div class="flex items-center gap-2 shrink-0 h-full">
+                <div class="flex items-center space-x-1.5 text-xs font-bold bg-gray-100 px-2 py-1.5 rounded-full border border-gray-200 hidden sm:flex">
+                    <button id="btn-tc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('tc')">繁</button>
+                    <span class="text-gray-300">|</span>
+                    <button id="btn-sc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('sc')">简</button>
+                    <span class="text-gray-300">|</span>
+                    <button id="btn-en" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('en')">EN</button>
+                </div>
+                
+                <button onclick="shareApp()" class="text-gray-500 hover:text-[#B8860B] transition text-lg px-1 active:scale-95 flex items-center" title="分享 / Share">
+                    <i class="fas fa-share-nodes"></i>
+                </button>
+                
+                <button onclick="window.location.href='manual.html'" class="text-gray-500 hover:text-[#B8860B] transition text-lg px-1 active:scale-95 flex items-center" data-i18n-title="userManualBtn" title="使用說明">
+                    <i class="fas fa-book"></i>
+                </button>
+            </div>
         </div>
 
-        <div id="weather-badge-container" class="flex-1 flex items-center justify-center overflow-hidden h-full min-w-0 transition-all duration-500 opacity-0">
-            </div>
-        
-        <div class="flex items-center gap-2 shrink-0 h-full">
-            <div class="flex items-center space-x-1.5 text-xs font-bold bg-gray-100 px-2.5 py-1.5 rounded-full border border-gray-200">
-                <button id="btn-tc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('tc')">繁</button>
-                <span class="text-gray-300">|</span>
-                <button id="btn-sc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('sc')">简</button>
-                <span class="text-gray-300">|</span>
-                <button id="btn-en" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('en')">EN</button>
-            </div>
-            
-            <button onclick="shareApp()" class="text-gray-500 hover:text-[#B8860B] transition text-lg px-1 active:scale-95 flex items-center" title="分享 / Share">
-                <i class="fas fa-share-nodes"></i>
-            </button>
-            
-            <button onclick="window.location.href='manual.html'" class="text-gray-500 hover:text-[#B8860B] transition text-lg px-1 active:scale-95 flex items-center" data-i18n-title="userManualBtn" title="使用說明">
-                <i class="fas fa-book"></i>
-            </button>
-        </div>
+        <!-- 下層：常規天氣走馬燈 (還原全寬度，適合長文字) -->
+        <div id="weather-badge-container" class="w-full transition-all duration-500 opacity-0"></div>
         
     </header>
     `;
@@ -90,43 +84,33 @@ function renderHeader() {
             translatePage();
         }
 
-        // 觸發讀取天氣數據
+        // 同時觸發讀取兩份天氣數據
         fetchWeatherNews();
+        fetchSpecialNews();
     }
 }
 
-// 🌤️ 核心功能：強制從 GitHub Raw 讀取 JSON 檔案
+// 🌤️ 功能 1：讀取常規天氣 (還原全寬度走馬燈)
 async function fetchWeatherNews() {
     const container = document.getElementById('weather-badge-container');
     if (!container) return;
 
     try {
-        // 嚴格執行：只讀取 GitHub Raw URL
         const apiUrl = `https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/hk_weather.json?v=${Date.now()}`; 
-
-        const res = await fetch(apiUrl, {
-            method: 'GET'
-        });
+        const res = await fetch(apiUrl, { method: 'GET' });
 
         if (res.ok) {
             const data = await res.json();
-            
-            // 讀取 hk_message
             let msg = data.hk_message || "";
             
             if (msg) {
-                // 🧹 清洗 WhatsApp 格式轉換為網頁 HTML
-                // 將 \n 換成直線分隔符號
-                msg = msg.replace(/\n/g, '<span class="text-blue-300 mx-2">|</span>'); 
-                // 將 WhatsApp 的 *粗體* 轉換為網頁的 <strong>
+                msg = msg.replace(/\n/g, '<span class="text-blue-300 mx-3">|</span>'); 
                 msg = msg.replace(/\*(.*?)\*/g, '<strong class="font-bold text-blue-900">$1</strong>'); 
-                // 移除連續多餘的直線
-                msg = msg.replace(/(\|\s*\|)+/g, '<span class="text-blue-300 mx-2">|</span>');
+                msg = msg.replace(/(\|\s*\|)+/g, '<span class="text-blue-300 mx-3">|</span>');
 
-                // 更新內容並顯示 (移除 opacity-0)
                 container.innerHTML = `
-                    <div class="weather-ticker-container w-full overflow-hidden bg-blue-50/60 rounded-md border border-blue-100/50 px-2 flex items-center h-7 text-[12px] text-blue-800">
-                        <i class="fas fa-cloud-sun text-blue-500 mr-2 shrink-0 animate-pulse text-[10px]"></i>
+                    <div class="weather-ticker-container w-full overflow-hidden bg-blue-50/60 rounded-md border border-blue-100/50 px-2 flex items-center h-7 text-[12px] text-blue-800 shadow-sm">
+                        <i class="fas fa-cloud-sun text-blue-500 mr-2 shrink-0 text-[11px]"></i>
                         <div class="w-full overflow-hidden relative h-full flex items-center no-scrollbar">
                             <div class="animate-scroll font-medium tracking-wide">
                                 ${msg}
@@ -138,7 +122,36 @@ async function fetchWeatherNews() {
             }
         }
     } catch (e) {
-        console.log("Weather fetch from GitHub failed:", e);
+        console.log("Routine weather fetch failed:", e);
+    }
+}
+
+// 🚨 功能 2：讀取特別天氣消息 (置於頂部中間，適合手機)
+async function fetchSpecialNews() {
+    const container = document.getElementById('special-weather-container');
+    if (!container) return;
+
+    try {
+        // ⚠️ 將下面條 URL 換成你專屬特別天氣 JSON 嘅真實 GitHub 路徑
+        const apiUrl = `https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/special_weather.json?v=${Date.now()}`; 
+        const res = await fetch(apiUrl, { method: 'GET' });
+
+        if (res.ok) {
+            const data = await res.json();
+            let msg = data.special_message || ""; 
+            
+            if (msg) {
+                container.innerHTML = `
+                    <div class="bg-red-50 text-red-600 border border-red-200 text-[11px] px-2 py-0.5 rounded-full font-bold flex items-center shadow-sm animate-pulse max-w-full truncate cursor-default" title="${msg}">
+                        <i class="fas fa-exclamation-triangle mr-1.5 shrink-0"></i>
+                        <span class="truncate">${msg}</span>
+                    </div>
+                `;
+                container.classList.remove('opacity-0');
+            }
+        }
+    } catch (e) {
+        console.log("Special weather fetch failed or no special news currently.", e);
     }
 }
 
