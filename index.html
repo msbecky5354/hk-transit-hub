@@ -17,7 +17,15 @@
         .swipe-container { position: relative; overflow: hidden; border-radius: 0.5rem; margin-bottom: 0.75rem; }
         .swipe-content { position: relative; z-index: 10; background: white; transition: transform 0.2s ease-out; touch-action: pan-y; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
-        .drag-handle, .group-title-handle { cursor: grab; touch-action: none; }
+        
+        /* 🛠️ 升級版 CSS 封印術：嚴防 iOS Chrome 攔截拖曳 */
+        .drag-handle, .group-title-handle { 
+            cursor: grab; 
+            touch-action: none !important; 
+            -webkit-user-select: none; 
+            user-select: none; 
+        }
+        
         .drag-handle:active, .group-title-handle:active { cursor: grabbing; }
         .group-title-handle { padding: 0.5rem 0; }
         .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; border: 2px dashed #cbd5e1; }
@@ -40,7 +48,6 @@
 
     <div id="app-footer"></div>
 
-    <!-- ✏️ 你原本的編輯花名 Modal (已成功修復還原) -->
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
         <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
             <h3 class="font-bold text-lg mb-4 text-gray-800">✏️ 編輯路線花名</h3>
@@ -75,7 +82,6 @@
             closeEditModal();
         }
 
-        // 🚑 你原本的自動修復邏輯 (已成功修復還原)
         function autoHealRoutes() {
             let routesStr = localStorage.getItem('hk_transit_routes'); if (!routesStr) return;
             let routes = JSON.parse(routesStr); let changed = false;
@@ -118,7 +124,6 @@
 
         function saveRoutes(routes) { localStorage.setItem('hk_transit_routes', JSON.stringify(routes)); }
 
-        // 👇 新加入的「刪除整個群組」功能
         window.deleteGroup = function(groupName) {
             const displayGroupName = typeof getTranslation === 'function' ? getTranslation(groupName, groupName) : groupName;
             let confirmMsg = typeof getTranslation === 'function' 
@@ -186,7 +191,6 @@
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'group-block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100'; groupDiv.dataset.groupName = groupName;
                 
-                // 👇 這裡精準加入了刪除群組的垃圾桶按鈕 (已與拖曳手柄完美分離)
                 groupDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-50">
                         <h2 class="group-title-handle flex-1 text-md font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 hover:text-red-500 transition">
@@ -201,11 +205,34 @@
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
                 groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
-                const listSortable = new Sortable(listDiv, { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', delay: 150, delayOnTouchOnly: true, fallbackOnBody: true, onEnd: function () { updateSorting(); } });
+                // 🛠️ 升級版 JS 設定：強制使用 JS 模擬拖曳，並加入容錯區間
+                const listSortable = new Sortable(listDiv, { 
+                    handle: '.drag-handle', 
+                    animation: 150, 
+                    ghostClass: 'sortable-ghost', 
+                    delay: 150, 
+                    delayOnTouchOnly: true, 
+                    forceFallback: true,        // <-- iOS Chrome 救星
+                    fallbackTolerance: 5,       // <-- 容許手指微震 5px
+                    fallbackOnBody: true, 
+                    onEnd: function () { updateSorting(); } 
+                });
                 window.listSortables.push(listSortable);
             });
 
-            window.dashboardSortable = new Sortable(container, { draggable: '.group-block', handle: '.group-title-handle', animation: 150, ghostClass: 'sortable-ghost', delay: 150, delayOnTouchOnly: true, fallbackOnBody: true, onEnd: function () { updateGroupSorting(); } });
+            // 🛠️ 群組層級同樣加入升級設定
+            window.dashboardSortable = new Sortable(container, { 
+                draggable: '.group-block', 
+                handle: '.group-title-handle', 
+                animation: 150, 
+                ghostClass: 'sortable-ghost', 
+                delay: 150, 
+                delayOnTouchOnly: true, 
+                forceFallback: true,        // <-- iOS Chrome 救星
+                fallbackTolerance: 5,       // <-- 容許手指微震 5px
+                fallbackOnBody: true, 
+                onEnd: function () { updateGroupSorting(); } 
+            });
 
             if (typeof translatePage === "function") translatePage(); 
             initSwipeToDelete(); fetchAllETAs();
