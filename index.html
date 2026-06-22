@@ -18,13 +18,16 @@
         .swipe-content { position: relative; z-index: 10; background: white; transition: transform 0.2s ease-out; touch-action: pan-y; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         
-        /* 🛠️ 升級版 CSS 封印術：嚴防 iOS Chrome 攔截拖曳 */
+        /* 🛠️ 終極 CSS 封印：加入 -webkit-touch-callout 防止 iOS 彈出選單 */
         .drag-handle, .group-title-handle { 
             cursor: grab; 
             touch-action: none !important; 
             -webkit-user-select: none; 
             user-select: none; 
+            -webkit-touch-callout: none !important; 
         }
+        /* 確保手指點擊時，事件落在把手 div，而不是 icon 身上 */
+        .drag-handle i, .group-title-handle i { pointer-events: none; }
         
         .drag-handle:active, .group-title-handle:active { cursor: grabbing; }
         .group-title-handle { padding: 0.5rem 0; }
@@ -205,31 +208,26 @@
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
                 groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
-                // 🛠️ 升級版 JS 設定：強制使用 JS 模擬拖曳，並加入容錯區間
+                // 🛠️ 終極設定：刪除 delay！一按即拖！
                 const listSortable = new Sortable(listDiv, { 
                     handle: '.drag-handle', 
                     animation: 150, 
                     ghostClass: 'sortable-ghost', 
-                    delay: 150, 
-                    delayOnTouchOnly: true, 
-                    forceFallback: true,        // <-- iOS Chrome 救星
-                    fallbackTolerance: 5,       // <-- 容許手指微震 5px
+                    forceFallback: true,        
+                    fallbackTolerance: 5,       
                     fallbackOnBody: true, 
                     onEnd: function () { updateSorting(); } 
                 });
                 window.listSortables.push(listSortable);
             });
 
-            // 🛠️ 群組層級同樣加入升級設定
             window.dashboardSortable = new Sortable(container, { 
                 draggable: '.group-block', 
                 handle: '.group-title-handle', 
                 animation: 150, 
                 ghostClass: 'sortable-ghost', 
-                delay: 150, 
-                delayOnTouchOnly: true, 
-                forceFallback: true,        // <-- iOS Chrome 救星
-                fallbackTolerance: 5,       // <-- 容許手指微震 5px
+                forceFallback: true,        
+                fallbackTolerance: 5,       
                 fallbackOnBody: true, 
                 onEnd: function () { updateGroupSorting(); } 
             });
