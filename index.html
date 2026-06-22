@@ -7,6 +7,9 @@
     <title data-i18n="appName">貼地通</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    
     <script src="lang.js?v=31"></script>
     <script src="config.js?v=31"></script>
     <script src="header.js"></script>
@@ -18,7 +21,7 @@
         .swipe-content { position: relative; z-index: 10; background: white; transition: transform 0.2s ease-out; touch-action: pan-y; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         
-        /* 🛠️ 終極 CSS 封印：加入 -webkit-touch-callout 防止 iOS 彈出選單 */
+        /* 🛠️ CSS 封印，配合補丁使用 */
         .drag-handle, .group-title-handle { 
             cursor: grab; 
             touch-action: none !important; 
@@ -208,14 +211,14 @@
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
                 groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
-                // 🛠️ 終極設定：刪除 delay！一按即拖！
+                // 🛠️ 配合補丁：關閉 forceFallback，畀返標準 Drag API 做嘢
                 const listSortable = new Sortable(listDiv, { 
                     handle: '.drag-handle', 
                     animation: 150, 
-                    ghostClass: 'sortable-ghost', 
-                    forceFallback: true,        
-                    fallbackTolerance: 5,       
-                    fallbackOnBody: true, 
+                    ghostClass: 'sortable-ghost',
+                    forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
+                    delay: 100,           // <-- 畀少少 delay 等系統準備
+                    delayOnTouchOnly: true,
                     onEnd: function () { updateSorting(); } 
                 });
                 window.listSortables.push(listSortable);
@@ -225,10 +228,10 @@
                 draggable: '.group-block', 
                 handle: '.group-title-handle', 
                 animation: 150, 
-                ghostClass: 'sortable-ghost', 
-                forceFallback: true,        
-                fallbackTolerance: 5,       
-                fallbackOnBody: true, 
+                ghostClass: 'sortable-ghost',
+                forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
+                delay: 100,
+                delayOnTouchOnly: true,
                 onEnd: function () { updateGroupSorting(); } 
             });
 
