@@ -26,13 +26,27 @@
     <div id="app-header"></div>
     <main class="max-w-lg mx-auto mt-6 px-4">
         
+      <!-- Step 1: 群組選擇 -->
         <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group"></h2>
             <div class="flex flex-col gap-3">
-                <select id="group-select" onchange="checkStep1()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
-                    <option value="" disabled selected data-i18n="selectGroup"></option>
-                </select>
-                <input type="text" id="new-group-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500 hidden-step" data-i18n-placeholder="newGroupPlaceholder" placeholder="" onkeyup="checkStep1()">
+                <div class="flex gap-2">
+                    <select id="group-select" onchange="checkStep1()" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
+                        <option value="" disabled selected data-i18n="selectGroup"></option>
+                    </select>
+                    <!-- 新增：編輯群組按鈕 -->
+                    <button id="edit-group-btn" onclick="editGroupName()" class="hidden-step bg-gray-50 text-gray-400 hover:text-blue-500 hover:border-blue-300 px-4 py-2 rounded-lg border-2 border-gray-200 transition" title="修改群組名稱">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+                
+                <!-- 新增：創建群組時的確認區塊 -->
+                <div id="new-group-container" class="hidden-step flex gap-2">
+                    <input type="text" id="new-group-input" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500" data-i18n-placeholder="newGroupPlaceholder" placeholder="輸入新群組名稱...">
+                    <button onclick="confirmNewGroup()" class="bg-gray-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-gray-900 transition whitespace-nowrap shadow-sm">
+                        確定
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -128,12 +142,17 @@
             loadMtrCsvData(); // 一開網頁即刻讀取 CSV！
         };
 
-        // 👇 自動讀取 CSV 並轉換為系統可讀嘅字典
+       // 👇 自動讀取 CSV 並轉換為系統可讀嘅字典
         async function loadMtrCsvData() {
             try {
-                // 確保檔案路徑正確，假設 mtr_lines_and_stations.csv 放喺 data/ 資料夾
-                const res = await fetch('data/mtr_lines_and_stations.csv');
-                if (!res.ok) return;
+                // 🚨 遵命指令：直接強制讀取 GitHub Raw 檔案，無視 Local 環境路徑問題！
+                const githubCsvUrl = 'https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/mtr_lines_and_stations.csv';
+                const res = await fetch(githubCsvUrl);
+                
+                if (!res.ok) {
+                    console.error("GitHub CSV 讀取失敗", res.status);
+                    return;
+                }
                 const text = await res.text();
                 const lines = text.split('\n');
                 if (lines.length < 2) return;
@@ -174,15 +193,81 @@
             selectEl.innerHTML += `<option value="NEW_GROUP" data-i18n="createNewGroup">${typeof getTranslation === 'function' ? getTranslation('createNewGroup') : '➕ 建立新群組...'}</option>`;
         }
 
-        function checkStep1() {
+       function checkStep1() {
             const groupSelect = document.getElementById('group-select').value;
-            const newGroupInput = document.getElementById('new-group-input');
-            if (groupSelect === "NEW_GROUP") { newGroupInput.classList.remove('hidden-step'); window.selectedGroup = newGroupInput.value.trim(); }
-            else { newGroupInput.classList.add('hidden-step'); window.selectedGroup = groupSelect; }
-            if (window.selectedGroup) { document.getElementById('step2-area').classList.remove('hidden-step'); }
-            else { document.getElementById('step2-area').classList.add('hidden-step'); }
+            const newGroupContainer = document.getElementById('new-group-container');
+            const editBtn = document.getElementById('edit-group-btn');
+            const step2Area = document.getElementById('step2-area');
+            
+            // 隱藏第二步，直到確定了群組
+            step2Area.classList.add('hidden-step'); 
+
+            if (groupSelect === "NEW_GROUP") { 
+                newGroupContainer.classList.remove('hidden-step'); 
+                editBtn.classList.add('hidden-step');
+                window.selectedGroup = ""; // 還沒按確定前清空
+            } else if (groupSelect) { 
+                newGroupContainer.classList.add('hidden-step'); 
+                window.selectedGroup = groupSelect;
+                step2Area.classList.remove('hidden-step'); // 選擇現有群組直接進入下一步
+                
+                // 判斷是否為預設群組，預設群組 (groupHome, groupWork) 不給改名
+                if(groupSelect === "groupHome" || groupSelect === "groupWork") {
+                    editBtn.classList.add('hidden-step');
+                } else {
+                    editBtn.classList.remove('hidden-step');
+                }
+            }
         }
 
+        // 新增：確認新群組按鈕功能
+        function confirmNewGroup() {
+            const inputVal = document.getElementById('new-group-input').value.trim();
+            if (!inputVal) {
+                alert(typeof getTranslation === 'function' ? getTranslation('enterGroupName', '請輸入群組名稱！') : '請輸入群組名稱！');
+                return;
+            }
+            window.selectedGroup = inputVal;
+            document.getElementById('step2-area').classList.remove('hidden-step');
+            
+            // UI 視覺回饋：輸入框閃一下綠色代表成功
+            const inputEl = document.getElementById('new-group-input');
+            inputEl.classList.add('border-green-500', 'bg-green-50');
+            setTimeout(() => {
+                inputEl.classList.remove('border-green-500', 'bg-green-50');
+            }, 800);
+        }
+
+        // 新增：修改現有群組名稱功能
+        function editGroupName() {
+            const oldName = window.selectedGroup;
+            if(!oldName || oldName === "NEW_GROUP") return;
+
+            const promptMsg = typeof getTranslation === 'function' ? getTranslation('editGroupPrompt', '請輸入新的群組名稱：') : '請輸入新的群組名稱：';
+            const newName = prompt(promptMsg, oldName);
+            
+            if (newName !== null && newName.trim() !== "" && newName.trim() !== oldName) {
+                const trimmedNewName = newName.trim();
+                
+                // 更新 LocalStorage 中所有屬於此群組的路線
+                let routes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
+                routes = routes.map(r => {
+                    if(r.group === oldName) {
+                        r.group = trimmedNewName;
+                    }
+                    return r;
+                });
+                localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
+                
+                // 更新全域變數並重新載入下拉選單
+                window.selectedGroup = trimmedNewName;
+                loadExistingGroups();
+                
+                // 將選單設為剛改好的新名字並觸發 UI 更新
+                document.getElementById('group-select').value = trimmedNewName;
+                checkStep1(); 
+            }
+        }
         function selectTransit(type) {
             window.selectedTransit = type;
             const pills = ['BUS', 'GMB', 'MTR', 'LRT'];

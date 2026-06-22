@@ -143,8 +143,14 @@ window.loadTransitDictionaries = async function() {
                     const destNames = { 'UP': { tc: [], en: [] }, 'DOWN': { tc: [], en: [] } };
 
                     for (const dir in tempDirs[routeId]) {
-                        // 🚨 核心修復：強制將所有 UT 分支轉為 UP，DT 分支轉為 DOWN
-                        const apiDir = dir.includes('UT') ? 'UP' : 'DOWN'; 
+                        // 🚨 終極修復：擴大判斷範圍，包容 MTR CSV 內各種奇怪的方向標示
+                        const upperDir = dir.toUpperCase();
+                        let apiDir = 'DOWN'; // 預設值
+                        // 如果包含 UT、UP 或 U，全部歸類為 UP
+                        if (upperDir.includes('UT') || upperDir === 'UP' || upperDir === 'U') {
+                            apiDir = 'UP';
+                        }
+                        
                         const stops = tempDirs[routeId][dir];
 
                         if (stops.length > 0) {
