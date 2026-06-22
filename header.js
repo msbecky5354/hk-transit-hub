@@ -37,8 +37,9 @@ function renderHeader() {
             </div>
             
             <!-- 右側：按鈕 -->
-            <div class="flex items-center gap-2 shrink-0 h-full">
-                <div class="flex items-center space-x-1.5 text-xs font-bold bg-gray-100 px-2 py-1.5 rounded-full border border-gray-200 hidden sm:flex">
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 h-full">
+                <!-- 🛠️ 已修復：移除 hidden sm:flex，改為全平台顯示，並加入手機版縮細設定 -->
+                <div class="flex items-center space-x-1 sm:space-x-1.5 text-[10px] sm:text-xs font-bold bg-gray-100 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-full border border-gray-200">
                     <button id="btn-tc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('tc')">繁</button>
                     <span class="text-gray-300">|</span>
                     <button id="btn-sc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('sc')">简</button>
@@ -132,7 +133,6 @@ async function fetchSpecialNews() {
     if (!container) return;
 
     try {
-        // ⚠️ 將下面條 URL 換成你專屬特別天氣 JSON 嘅真實 GitHub 路徑
         const apiUrl = `https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/special_weather.json?v=${Date.now()}`; 
         const res = await fetch(apiUrl, { method: 'GET' });
 
