@@ -333,30 +333,49 @@
             });
         }
 
-        async function fetchAllETAs() {
+       async function fetchAllETAs() {
             const routes = getRoutes(); const now = Date.now();
             routes.forEach(async (route) => {
                 if (!route.apiUrl || route.apiUrl === '#') return;
                 const display = document.getElementById(`eta-display-${route.id}`);
                 let etas = []; let directSuccess = false;
                 
-                if (route.transitType !== 'MTR_BUS') {
+                // 1. MTR Bus 需要使用 POST Request
+                if (route.transitType === 'MTR_BUS') {
+                    try {
+                        let routeName = route.route || '';
+                        const response = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ language: "zh", routeName: routeName })
+                        });
+                        if (response.ok) {
+                            const json = await response.json();
+                            etas = parseRawTrafficJson(route, json, now);
+                            directSuccess = true;
+                        }
+                    } catch (mtrBusError) {
+                        console.warn(`MTR Bus ETA 讀取失敗: ${route.route}`, mtrBusError);
+                    }
+                } 
+                // 2. 其他公共交通工具使用標準 GET Request
+                else {
                     try {
                         const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
-                        if (response.ok) { const text = await response.text(); if (text && text.trim().length > 0) { const json = JSON.parse(text); etas = parseRawTrafficJson(route, json, now); directSuccess = true; } }
-                    } catch (directError) {}
+                        if (response.ok) { 
+                            const text = await response.text(); 
+                            if (text && text.trim().length > 0) { 
+                                const json = JSON.parse(text); 
+                                etas = parseRawTrafficJson(route, json, now); 
+                                directSuccess = true; 
+                            } 
+                        }
+                    } catch (directError) {
+                        console.warn(`ETA 讀取失敗: ${route.route}`, directError);
+                    }
                 }
 
-                if (!directSuccess) {
-                    try {
-                        let n8nEtaUrl = `${window.APP_CONFIG.N8N_BASE_URL}/get-eta?url=${encodeURIComponent(route.apiUrl)}`;
-                        if (route.transitType === 'MTR_BUS') {
-                            n8nEtaUrl = `${window.APP_CONFIG.N8N_BASE_URL}/get-eta?type=MTR_BUS&route=${encodeURIComponent(route.route)}`;
-                        }
-                        const response = await fetch(n8nEtaUrl, { method: 'GET', headers: { 'x-transit-token': window.APP_CONFIG.N8N_TOKEN } });
-                        if (response.ok) { const json = await response.json(); etas = parseRawTrafficJson(route, json, now); }
-                    } catch (bffError) {}
-                }
+                // 更新 UI 顯示
                 if (display) {
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
@@ -373,12 +392,42 @@
 
         function parseRawTrafficJson(routeObj, json, now) {
             let etas = []; let transitType = routeObj.transitType; let apiUrl = routeObj.apiUrl;
+            
+            // 👇 幫你裝嘅「偷聽器」，用嚟檢查 MTR 傳返嚟咩資料
+            console.log(`[ETA Debug] Route: ${routeObj.route} | Transit: ${transitType}`, { 
+                url: apiUrl, 
+                rawData: json 
+            });
+
             try {
                 if (transitType === 'KMB' || transitType === 'LWB' || transitType === 'CITYBUS' || transitType === 'CTB') {
                     if (json.data && Array.isArray(json.data)) etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
                 } else if (transitType === 'MTR') {
-                    const urlObj = new URL(apiUrl); const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta'); const mtrKey = `${line}-${sta}`;
-                    if (json.data && json.data[mtrKey] && json.data[mtrKey][dir]) etas = json.data[mtrKey][dir].filter(t => t.time).map(t => Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - now) / 60000)));
+                    const urlObj = new URL(apiUrl); 
+                    const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta'); 
+                    const mtrKey = `${line}-${sta}`;
+                    
+                    if (json.data && json.data[mtrKey] && Array.isArray(json.data[mtrKey][dir])) {
+                        let systemTimeStr = json.curr_time;
+                        let serverTime = now; // 預設用手機時間
+                        
+                        // 判斷 MTR 伺服器時間是否正常
+                        if (systemTimeStr && systemTimeStr !== '-' && systemTimeStr.trim() !== '') {
+                            serverTime = new Date(systemTimeStr.replace(/-/g, '/')).getTime();
+                        }
+
+                        etas = json.data[mtrKey][dir].map(t => {
+                            if (t.time && t.time !== '-') {
+                                // 正常情況：用時間戳計數
+                                return Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - serverTime) / 60000));
+                            } else if (t.ttnt !== undefined && t.ttnt !== null && t.ttnt !== '') {
+                                // 終極後備：如果 MTR 壞 time 但有畀 ttnt (倒數分鐘)，直接執死雞！
+                                return parseInt(t.ttnt, 10);
+                            }
+                            return null;
+                        }).filter(val => val !== null && !isNaN(val)); // 過濾走所有計唔到嘅廢料
+                    }
+                
                 } else if (transitType === 'NLB') {
                     if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
                 } else if (transitType === 'GMB') {
@@ -411,7 +460,10 @@
                         }
                     }
                 }
-            } catch (err) {}
+            } catch (err) {
+                // 如果解析過程有 Error，印埋出嚟
+                console.error(`[ETA Parse Error] Route: ${routeObj.route}`, err);
+            }
             return etas;
         }
         

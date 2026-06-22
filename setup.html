@@ -320,7 +320,7 @@
             }
         }
 
-        window.fetchOmniStops = async function() {
+       window.fetchOmniStops = async function() {
             const routeInput = document.getElementById('route-input').value.trim().toUpperCase();
             if (!routeInput) return;
 
@@ -334,85 +334,291 @@
             document.getElementById('setup-area').classList.add('hidden-step');
 
             try {
-                let baseUrl = window.APP_CONFIG.N8N_BASE_URL.replace(/\/$/, '');
-                if (!baseUrl.endsWith('get-omni-setup')) baseUrl += '/get-omni-setup';
-                const apiUrl = `${baseUrl}?route=${encodeURIComponent(routeInput)}&type=${window.selectedTransit}&v=${Date.now()}`;
-                
-                const response = await fetch(apiUrl, { method: 'GET', headers: { 'x-transit-token': window.APP_CONFIG.N8N_TOKEN, 'Accept': 'application/json' }});
-                if (!response.ok) throw new Error(`Fetch Error (${response.status})`);
-                
-                const json = await response.json();
-                if (json.error) throw new Error(json.error);
-                if (!json.directions || Object.keys(json.directions).length === 0) throw new Error(`找不到路線 ${routeInput}。`);
+                let directions = {};
+                let transitType = window.selectedTransit;
+
+                // ==========================================
+                // 🚌 巴士模式 (九巴, 城巴, 嶼巴, 港鐵巴士)
+                // ==========================================
+                if (window.selectedTransit === 'BUS') {
+                    // 同步發出 4 個請求 (如果有 Error 自動食咗佢，唔會阻住其他)
+                    const [kmbRes, ctbRes, nlbRes, mtrBusRes] = await Promise.allSettled([
+                        fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/${routeInput}/outbound/1`).catch(()=>null),
+                        fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route/CTB/${routeInput}`).catch(()=>null),
+                        fetch(`https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list`).catch(()=>null),
+                        fetch(`https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({language:"zh", routeName:routeInput}) }).catch(()=>null)
+                    ]);
+
+                    const kmbInfo = kmbRes.status === 'fulfilled' && kmbRes.value && kmbRes.value.ok ? await kmbRes.value.json() : null;
+                    const ctbInfo = ctbRes.status === 'fulfilled' && ctbRes.value && ctbRes.value.ok ? await ctbRes.value.json() : null;
+                    const nlbInfo = nlbRes.status === 'fulfilled' && nlbRes.value && nlbRes.value.ok ? await nlbRes.value.json() : null;
+                    const mtrBusInfo = mtrBusRes.status === 'fulfilled' && mtrBusRes.value && mtrBusRes.value.ok ? await mtrBusRes.value.json() : null;
+
+                    // 🚨 1. 港鐵巴士 (MTR Bus) 分流邏輯
+                    if (mtrBusInfo && mtrBusInfo.busStop && mtrBusInfo.busStop.length > 0) {
+                        let stopsOut = [], stopsIn = [];
+                        mtrBusInfo.busStop.forEach(stop => {
+                            let stopObj = {
+                                stop_id: stop.busStopId,
+                                name_obj: { tc: stop.busStopId, en: stop.busStopId },
+                                api_url: `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule?routeName=${routeInput}`
+                            };
+                            // 透過 ID 判斷: U = 回程
+                            if (stop.busStopId.includes('-U')) stopsIn.push(stopObj);
+                            else stopsOut.push(stopObj);
+                        });
+                        if (stopsOut.length > 0) directions['mtrbus_outbound'] = { dest_name: { tc: `${routeInput} 去程`, en: `${routeInput} Outbound` }, stops: stopsOut };
+                        if (stopsIn.length > 0) directions['mtrbus_inbound'] = { dest_name: { tc: `${routeInput} 回程`, en: `${routeInput} Inbound` }, stops: stopsIn };
+                    }
+
+                    // 🔴 2. 九巴 / 龍運 (KMB / LWB)
+                    if (kmbInfo && kmbInfo.data) {
+                        const [outRes, inRes] = await Promise.allSettled([
+                            fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${routeInput}/outbound/1`),
+                            fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${routeInput}/inbound/1`)
+                        ]);
+                        const kOut = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
+                        const kIn = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
+                        
+                        const rInfo = Array.isArray(kmbInfo.data) ? kmbInfo.data[0] : kmbInfo.data;
+                        const isLwb = rInfo.co === 'LWB';
+                        const coTc = isLwb ? '龍運' : '九巴', coEn = isLwb ? 'LWB' : 'KMB';
+
+                        if (kOut && kOut.data && kOut.data.length > 0) {
+                            directions['kmb_outbound'] = { dest_name: { tc: `${rInfo.dest_tc || '未知'} (${coTc})`, en: `${rInfo.dest_en || 'Unknown'} (${coEn})` }, stops: kOut.data.map(s => ({ stop_id: s.stop, name_obj: { tc: `政府數據載入中...`, en: `Loading...` }, api_url: `https://data.etabus.gov.hk/v1/transport/kmb/eta/${s.stop}/${routeInput}/1` })) };
+                        }
+                        if (kIn && kIn.data && kIn.data.length > 0) {
+                            directions['kmb_inbound'] = { dest_name: { tc: `${rInfo.orig_tc || '未知'} (${coTc})`, en: `${rInfo.orig_en || 'Unknown'} (${coEn})` }, stops: kIn.data.map(s => ({ stop_id: s.stop, name_obj: { tc: `政府數據載入中...`, en: `Loading...` }, api_url: `https://data.etabus.gov.hk/v1/transport/kmb/eta/${s.stop}/${routeInput}/1` })) };
+                        }
+                    }
+
+                    // 🟡 3. 城巴 (CTB) + 循環線拆分
+                    if (ctbInfo && ctbInfo.data && ctbInfo.data.route === routeInput) {
+                        const [outRes, inRes] = await Promise.allSettled([
+                            fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/CTB/${routeInput}/outbound`),
+                            fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/CTB/${routeInput}/inbound`)
+                        ]);
+                        const cOut = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
+                        const cIn = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
+                        const cInfo = ctbInfo.data;
+
+                        const formatCtbStops = (arr) => arr ? arr.map(s => ({ stop_id: s.stop, name_obj: { tc: "🔄 政府數據載入中...", en: "Loading..." }, api_url: `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/CTB/${s.stop}/${routeInput}` })) : [];
+                        const outStops = cOut && cOut.data ? formatCtbStops(cOut.data) : [];
+                        const inStops = cIn && cIn.data ? formatCtbStops(cIn.data) : [];
+
+                        const splitCircularRoute = (stopsArray) => {
+                            let splitIndex = Math.floor(stopsArray.length / 2);
+                            let destTc = (cInfo.dest_tc || '').replace(/\(循環線\)/g, '').trim();
+                            let destEn = (cInfo.dest_en || '').replace(/\(Circular\)/gi, '').trim();
+                            return {
+                                outbound: { dest_name: { tc: `${destTc} (城巴)`, en: `${destEn} (CTB)` }, stops: stopsArray.slice(0, splitIndex + 1) },
+                                inbound: { dest_name: { tc: `${cInfo.orig_tc || ''} (城巴)`, en: `${cInfo.orig_en || ''} (CTB)` }, stops: stopsArray.slice(splitIndex) }
+                            };
+                        };
+
+                        if (outStops.length > 0 && inStops.length === 0) {
+                            const res = splitCircularRoute(outStops); directions['ctb_outbound'] = res.outbound; directions['ctb_inbound'] = res.inbound;
+                        } else if (inStops.length > 0 && outStops.length === 0) {
+                            const res = splitCircularRoute(inStops); directions['ctb_outbound'] = res.outbound; directions['ctb_inbound'] = res.inbound;
+                        } else if (outStops.length > 0 && inStops.length > 0) {
+                            if (outStops.length === inStops.length && outStops[0].stop_id === inStops[0].stop_id) {
+                                const res = splitCircularRoute(outStops); directions['ctb_outbound'] = res.outbound; directions['ctb_inbound'] = res.inbound;
+                            } else {
+                                directions['ctb_outbound'] = { dest_name: { tc: `${cInfo.dest_tc || '未知'} (城巴)`, en: `${cInfo.dest_en || 'Unknown'} (CTB)` }, stops: outStops };
+                                directions['ctb_inbound'] = { dest_name: { tc: `${cInfo.orig_tc || '未知'} (城巴)`, en: `${cInfo.orig_en || 'Unknown'} (CTB)` }, stops: inStops };
+                            }
+                        }
+                    }
+
+                    // 🔵 4. 嶼巴 (NLB)
+                    if (nlbInfo && nlbInfo.routes) {
+                        const matchedRoutes = nlbInfo.routes.filter(r => r.routeNo.toUpperCase() === routeInput);
+                        const getDest = (name) => name && name.includes('>') ? name.split('>')[1].trim() : name;
+                        
+                        if (matchedRoutes.length > 0) {
+                            const r1 = matchedRoutes[0];
+                            const r1Res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r1.routeId}`);
+                            if (r1Res.ok) {
+                                const r1Data = await r1Res.json();
+                                if (r1Data.stops) {
+                                    directions['nlb_outbound'] = { dest_name: { tc: `${getDest(r1.routeName_c)} (嶼巴)`, en: `${getDest(r1.routeName_e)} (NLB)` }, stops: r1Data.stops.map(s => ({ stop_id: s.stopId.toString(), name_obj: { tc: s.stopName_c || `站點 ${s.stopId}`, en: s.stopName_e || `Stop ${s.stopId}` }, api_url: `https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${r1.routeId}&stopId=${s.stopId}&language=zh` })) };
+                                }
+                            }
+                            if (matchedRoutes.length > 1) {
+                                const r2 = matchedRoutes[1];
+                                const r2Res = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r2.routeId}`);
+                                if (r2Res.ok) {
+                                    const r2Data = await r2Res.json();
+                                    if (r2Data.stops) {
+                                        directions['nlb_inbound'] = { dest_name: { tc: `${getDest(r2.routeName_c)} (嶼巴)`, en: `${getDest(r2.routeName_e)} (NLB)` }, stops: r2Data.stops.map(s => ({ stop_id: s.stopId.toString(), name_obj: { tc: s.stopName_c || `站點 ${s.stopId}`, en: s.stopName_e || `Stop ${s.stopId}` }, api_url: `https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${r2.routeId}&stopId=${s.stopId}&language=zh` })) };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ==========================================
+                // 🟢 小巴模式 (GMB) - 防斷線迴圈 + 智能折返點搜尋
+                // ==========================================
+                if (window.selectedTransit === 'GMB') {
+                    const regions = ['NT', 'KLN', 'HKI'];
+                    for (const region of regions) {
+                        try {
+                            const rRes = await fetch(`https://data.etagmb.gov.hk/route/${region}/${routeInput}`);
+                            if (!rRes.ok) continue;
+                            const info = await rRes.json();
+                            
+                            if (info.data && info.data.length > 0) {
+                                const routeInfo = info.data[0];
+                                const routeId = routeInfo.route_id;
+                                
+                                const [outRes, inRes] = await Promise.allSettled([
+                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
+                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
+                                ]);
+                                
+                                const outData = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
+                                const inData = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
+
+                                let cOut = outData && outData.data && outData.data.route_stops ? outData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+                                let cIn = inData && inData.data && inData.data.route_stops ? inData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+
+                                if (cOut.length === 0 && cIn.length === 0) continue;
+
+                                let offDestTc = routeInfo.directions[0]?.dest_tc || "";
+                                let offDestEn = routeInfo.directions[0]?.dest_en || "";
+                                let offOrigTc = routeInfo.directions[0]?.orig_tc || "";
+                                let offOrigEn = routeInfo.directions[0]?.orig_en || "";
+
+                                const cleanDestName = (name) => name ? name.replace(/\s*\(.*?\)/g, '').replace(/站$/g, '').replace(/總站$/g, '').replace(/交匯處$/g, '').trim() : "";
+
+                                const splitGmbCircularRoute = (stopsArray) => {
+                                    let splitIndex = Math.floor(stopsArray.length / 2);
+                                    let realDestName = "";
+                                    if (offDestTc) {
+                                        realDestName = offDestTc.replace(/\s*\(.*?\)/g, '').trim();
+                                        const keyword = cleanDestName(offDestTc);
+                                        if (keyword.length >= 2) {
+                                            for (let i = 1; i < stopsArray.length - 1; i++) {
+                                                if (stopsArray[i].name_obj.tc.includes(keyword)) splitIndex = i;
+                                            }
+                                        }
+                                    }
+                                    const turnaroundStop = stopsArray[splitIndex].name_obj;
+                                    const finalStop = stopsArray[stopsArray.length - 1].name_obj;
+                                    const outDest = realDestName ? { tc: realDestName, en: turnaroundStop.en } : { tc: turnaroundStop.tc, en: turnaroundStop.en };
+                                    return {
+                                        outbound: { dest_name: outDest, stops: stopsArray.slice(0, splitIndex + 1) },
+                                        inbound: { dest_name: { tc: finalStop.tc, en: finalStop.en }, stops: stopsArray.slice(splitIndex) }
+                                    };
+                                };
+
+                                const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
+                                const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
+
+                                const outKey = `gmb_${region.toLowerCase()}_out`;
+                                const inKey = `gmb_${region.toLowerCase()}_in`;
+
+                                if (isOutCirc) {
+                                    const res = splitGmbCircularRoute(cOut); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                } else if (isInCirc && cOut.length === 0) {
+                                    const res = splitGmbCircularRoute(cIn); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                } else {
+                                    if (cOut.length > 0) directions[outKey] = { dest_name: { tc: offDestTc || cOut[cOut.length - 1].name_obj.tc, en: offDestEn || cOut[cOut.length - 1].name_obj.en }, stops: cOut };
+                                    if (cIn.length > 0) directions[inKey] = { dest_name: { tc: offOrigTc || cIn[cIn.length - 1].name_obj.tc, en: offOrigEn || cIn[cIn.length - 1].name_obj.en }, stops: cIn };
+                                }
+                            }
+                        } catch (regionErr) {
+                            console.warn(`搜尋 ${region} 小巴時發生錯誤 (已略過):`, regionErr);
+                        }
+                    }
+                }
+
+                // ==========================================
+                // 🏁 最終處理 (已修復九巴及城巴字典查閱功能)
+                // ==========================================
+                if (Object.keys(directions).length === 0) throw new Error(`找不到路線 ${routeInput}。`);
+
+                // 準備字典 Cache
+                if (typeof window.CTB_DICT_CACHE === 'undefined') window.CTB_DICT_CACHE = {};
+                if (typeof window.KMB_DICT_CACHE === 'undefined') window.KMB_DICT_CACHE = {}; // 👈 新增九巴字典
 
                 let missingCtbStops = new Set();
-                Object.values(json.directions).forEach(dir => {
+                let missingKmbStops = new Set();
+
+                // 收集所有需要查字典嘅站點 ID
+                Object.values(directions).forEach(dir => {
                     dir.stops.forEach(s => {
-                        if (s.name_obj && s.name_obj.tc && s.name_obj.tc.includes('政府數據載入中')) {
-                            if (s.api_url.includes('citybus')) {
-                                missingCtbStops.add(s.stop_id);
-                            }
+                        if (s.name_obj.tc.includes('政府數據載入中')) {
+                            if (s.api_url.includes('citybus')) missingCtbStops.add(s.stop_id);
+                            if (s.api_url.includes('kmb')) missingKmbStops.add(s.stop_id); // 👈 認出九巴 API Link
                         }
                     });
                 });
 
+                // 🟡 處理城巴字典
                 if (missingCtbStops.size > 0) {
                     const stopsToFetch = Array.from(missingCtbStops).filter(id => !window.CTB_DICT_CACHE[id]);
-                    if (stopsToFetch.length > 0) {
-                        const fetchPromises = stopsToFetch.map(async (stopId) => {
-                            try {
-                                const res = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${stopId}`);
-                                if (res.ok) {
-                                    const data = await res.json();
-                                    if (data && data.data) window.CTB_DICT_CACHE[stopId] = data.data; 
-                                }
-                            } catch (e) { console.warn(`取得城巴站點 ${stopId} 失敗:`, e); }
-                        });
-                        await Promise.all(fetchPromises);
-                    }
-                    Object.values(json.directions).forEach(dir => {
+                    await Promise.all(stopsToFetch.map(async id => {
+                        try {
+                            const res = await fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${id}`);
+                            if (res.ok) { const d = await res.json(); if (d.data) window.CTB_DICT_CACHE[id] = d.data; }
+                        } catch(e) {}
+                    }));
+                    Object.values(directions).forEach(dir => {
                         dir.stops.forEach(s => {
-                            if (s.name_obj && s.name_obj.tc && s.name_obj.tc.includes('政府數據載入中') && window.CTB_DICT_CACHE[s.stop_id]) {
-                                s.name_obj.tc = window.CTB_DICT_CACHE[s.stop_id].name_tc;
-                                s.name_obj.en = window.CTB_DICT_CACHE[s.stop_id].name_en;
+                            if (s.name_obj.tc.includes('政府數據載入中') && window.CTB_DICT_CACHE[s.stop_id]) {
+                                s.name_obj = { tc: window.CTB_DICT_CACHE[s.stop_id].name_tc, en: window.CTB_DICT_CACHE[s.stop_id].name_en };
                             }
                         });
                     });
                 }
 
-                if (window.MTR_BUS_DICT) {
-                    Object.keys(json.directions).forEach(dirKey => {
-                        if (dirKey.includes('mtrbus')) {
-                            json.directions[dirKey].stops.forEach((s, i) => {
-                                if (window.MTR_BUS_DICT.STOPS[s.stop_id]) {
-                                    s.name_obj.tc = window.MTR_BUS_DICT.STOPS[s.stop_id].tc;
-                                    s.name_obj.en = window.MTR_BUS_DICT.STOPS[s.stop_id].en;
-                                } else {
-                                    s.name_obj.tc = `站點 ${i + 1} (${s.stop_id})`;
-                                    s.name_obj.en = `Stop ${i + 1} (${s.stop_id})`;
-                                }
-                            });
-                            
-                            const stopsArr = json.directions[dirKey].stops;
-                            if (stopsArr.length > 0) {
-                                const lastStop = stopsArr[stopsArr.length - 1];
-                                json.directions[dirKey].dest_name.tc = lastStop.name_obj.tc + ' (港鐵)';
-                                json.directions[dirKey].dest_name.en = lastStop.name_obj.en + ' (MTR)';
+                // 🔴 處理九巴字典 (全新加入)
+                if (missingKmbStops.size > 0) {
+                    const stopsToFetch = Array.from(missingKmbStops).filter(id => !window.KMB_DICT_CACHE[id]);
+                    await Promise.all(stopsToFetch.map(async id => {
+                        try {
+                            const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop/${id}`);
+                            if (res.ok) { const d = await res.json(); if (d.data) window.KMB_DICT_CACHE[id] = d.data; }
+                        } catch(e) {}
+                    }));
+                    Object.values(directions).forEach(dir => {
+                        dir.stops.forEach(s => {
+                            if (s.name_obj.tc.includes('政府數據載入中') && window.KMB_DICT_CACHE[s.stop_id]) {
+                                s.name_obj = { tc: window.KMB_DICT_CACHE[s.stop_id].name_tc, en: window.KMB_DICT_CACHE[s.stop_id].name_en };
                             }
+                        });
+                    });
+                }
+
+                // 🚇 補完 MTR Bus 中文名
+                if (window.MTR_BUS_DICT) {
+                    Object.keys(directions).forEach(dirKey => {
+                        if (dirKey.includes('mtrbus')) {
+                            directions[dirKey].stops.forEach((s, i) => {
+                                if (window.MTR_BUS_DICT.STOPS[s.stop_id]) s.name_obj = window.MTR_BUS_DICT.STOPS[s.stop_id];
+                                else s.name_obj = { tc: `站點 ${i + 1} (${s.stop_id})`, en: `Stop ${i + 1} (${s.stop_id})` };
+                            });
                         }
                     });
                 }
 
-                window.currentRouteData = json;
-                window.currentRouteData.route = routeInput; 
-                window.currentTransit = json.transitType || window.selectedTransit;
-                window.activeDirection = Object.keys(json.directions)[0];
-                
+                // 設定最終資料並顯示 UI
+                window.currentRouteData = { route: routeInput, transitType: transitType, directions: directions };
+                // ... (下面維持不變 renderDirectionTabs 等等)
+                window.currentTransit = transitType;
+                window.activeDirection = Object.keys(directions)[0];
+
                 document.getElementById('stop-selection-ui').classList.remove('hidden-step');
                 renderDirectionTabs();
                 renderStopDropdown();
                 loading.classList.add('hidden-step');
-            } catch (err) { loading.textContent = err.message; }
+
+            } catch (err) { 
+                loading.textContent = err.message; 
+            }
         };
 
         function loadStaticRoute() {

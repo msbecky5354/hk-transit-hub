@@ -1,24 +1,18 @@
 // config.js 
-const APP_CONFIG = {
-    // 🚨 已經幫你將 API 網址換做你真正運行緊嘅 passionate-jerboa
-    N8N_BASE_URL: "https://passionate-jerboa.pikapod.net/webhook",
-    N8N_TOKEN: "PhFhsEfKlOxtRJxn"
+
+// ==========================================
+// 🚨 系統設定 (已棄用 n8n 後端，目前全前端運行)
+// ==========================================
+window.APP_CONFIG = {
+    // 預留位置，方便日後加入其他前端設定
+    VERSION: "v62"
 };
-
-if (localStorage.getItem('custom_n8n_url')) {
-    APP_CONFIG.N8N_BASE_URL = localStorage.getItem('custom_n8n_url');
-}
-if (localStorage.getItem('custom_n8n_token')) {
-    APP_CONFIG.N8N_TOKEN = localStorage.getItem('custom_n8n_token');
-}
-
-window.APP_CONFIG = APP_CONFIG;
-
 
 // ==========================================
 // 📱 PWA 全域動態注入 (Single Source of Truth)
 // ==========================================
 (function injectPWATags() {
+    // 防禦機制：若頁面已存在 manifest，則不重複注入，避免 DOM 污染
     if (document.querySelector('link[rel="manifest"]')) return;
 
     const pwaMetaHtml = `
@@ -26,6 +20,7 @@ window.APP_CONFIG = APP_CONFIG;
         <link rel="icon" type="image/png" href="icon-192.png">
         
         <meta name="theme-color" content="#dc2626">
+        <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="Transit Hub">
@@ -61,23 +56,4 @@ window.APP_CONFIG = APP_CONFIG;
         }
     `;
     document.head.appendChild(style);
-})(); // ⬅️ 這裡正確關閉字體注入模塊
-
-// ==========================================
-// 📱 PWA 全域動態注入 (Single Source of Truth)
-// ==========================================
-(function injectPWATags() {
-    // 防禦機制：若頁面已存在 manifest，則不重複注入，避免 DOM 污染
-    if (document.querySelector('link[rel="manifest"]')) return;
-
-    const pwaMetaHtml = `
-        <link rel="manifest" href="manifest.json">
-        <meta name="theme-color" content="#dc2626">
-        
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Transit Hub">
-        <link rel="apple-touch-icon" href="icon-192.png">
-    `;
-    document.head.insertAdjacentHTML('beforeend', pwaMetaHtml);
-})(); // ⬅️ 這裡是完全獨立的 PWA 注入模塊
+})();
