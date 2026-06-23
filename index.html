@@ -253,18 +253,25 @@
                 rawDestName = rawDestName.replace(regex, '').trim();
             }
 
-            let cleanDestName = rawDestName;
+                        let cleanDestName = rawDestName;
             if (cleanDestName.includes('往 ')) cleanDestName = cleanDestName.split('往 ').pop().trim();
             else if (cleanDestName.toLowerCase().includes(' to ')) cleanDestName = cleanDestName.split(/ to /i).pop().trim();
             
+            // 🛠️ 補丁：移除所有括號內容作精準比較，解決「深圳灣 往 深圳灣(嶼巴)」嘅反智問題
+            const regexClean = /\s*[\(（][^\)）]*[\)）]/g;
+            const baseStop = stopName.replace(regexClean, '').trim();
+            const baseDest = cleanDestName.replace(regexClean, '').trim();
+            
             let directionStr = "";
-            if (cleanDestName && stopName !== cleanDestName) {
+            // 升級判斷：起點終點名一樣 (無視括號)，或者終點名包埋起點名，就當佢係循環線
+            if (cleanDestName && baseStop !== baseDest && !baseDest.includes(baseStop)) {
                 const toWord = currentLang === 'en' ? ' To ' : ' 往 '; 
                 directionStr = `${stopName}${toWord}${cleanDestName}`;
             } else {
                 const loopWord = currentLang === 'en' ? ' (Circular)' : ' (循環線)';
                 directionStr = `${stopName}${loopWord}`;
             }
+
 
             let mainTitle = directionStr; let subTitleHtml = '';
             if (route.isCustomAlias && route.alias && route.alias.trim() !== '') { mainTitle = route.alias; subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`; }
