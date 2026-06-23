@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3D9W2FH09X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3D9W2FH09X');
+</script>
     
     <title data-i18n="appName">貼地通</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -384,11 +394,25 @@
 
                 // 更新 UI 顯示
                 if (display) {
+                    // 🚨 儲存 API 傳遞過來嘅總站標記 (因為 slice 會洗走 Array 嘅自訂屬性)
+                    const isTerminalStart = etas.isDeparting === true;
+                    
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
                         const etaHtml = etas.map(min => {
                             let colorClass = min <= 5 ? "text-green-600" : (min <= 15 ? "text-orange-500" : "text-gray-800");
-                            let timeText = min === 0 ? getTranslation('arriving', '即將抵達') : min; let unit = min === 0 ? "" : `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
+                            
+                            let timeText = min;
+                            let unit = `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
+                            
+                            if (min === 0) {
+                                // 🛠️ 根據底層 API seq=1 嘅鐵證，決定字眼！
+                                const arrivingText = getTranslation('arriving', '即將抵達');
+                                const departingText = getTranslation('departing', '即將開出');
+                                timeText = isTerminalStart ? departingText : arrivingText;
+                                unit = ""; // 0分鐘唔需要顯示「分鐘」兩個字
+                            }
+                            
                             return `<span class="${colorClass} font-black text-xl">${timeText}</span>${unit}`;
                         }).join('<span class="text-gray-300 mx-2">|</span>');
                         display.innerHTML = etaHtml;
@@ -400,15 +424,15 @@
         function parseRawTrafficJson(routeObj, json, now) {
             let etas = []; let transitType = routeObj.transitType; let apiUrl = routeObj.apiUrl;
             
-            // 👇 幫你裝嘅「偷聽器」，用嚟檢查 MTR 傳返嚟咩資料
-            console.log(`[ETA Debug] Route: ${routeObj.route} | Transit: ${transitType}`, { 
-                url: apiUrl, 
-                rawData: json 
-            });
-
             try {
                 if (transitType === 'KMB' || transitType === 'LWB' || transitType === 'CITYBUS' || transitType === 'CTB') {
-                    if (json.data && Array.isArray(json.data)) etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
+                    if (json.data && Array.isArray(json.data)) {
+                        etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
+                        // 🌟 API 破譯：如果 json.data 入面嘅 seq (分站序號) 係 1，百分之百係總站開出！
+                        if (json.data.some(item => String(item.seq) === '1')) {
+                            etas.isDeparting = true;
+                        }
+                    }
                 } else if (transitType === 'MTR') {
                     const urlObj = new URL(apiUrl); 
                     const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta'); 
@@ -416,32 +440,38 @@
                     
                     if (json.data && json.data[mtrKey] && Array.isArray(json.data[mtrKey][dir])) {
                         let systemTimeStr = json.curr_time;
-                        let serverTime = now; // 預設用手機時間
+                        let serverTime = now; 
                         
-                        // 判斷 MTR 伺服器時間是否正常
                         if (systemTimeStr && systemTimeStr !== '-' && systemTimeStr.trim() !== '') {
                             serverTime = new Date(systemTimeStr.replace(/-/g, '/')).getTime();
                         }
 
                         etas = json.data[mtrKey][dir].map(t => {
                             if (t.time && t.time !== '-') {
-                                // 正常情況：用時間戳計數
                                 return Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - serverTime) / 60000));
                             } else if (t.ttnt !== undefined && t.ttnt !== null && t.ttnt !== '') {
-                                // 終極後備：如果 MTR 壞 time 但有畀 ttnt (倒數分鐘)，直接執死雞！
                                 return parseInt(t.ttnt, 10);
                             }
                             return null;
-                        }).filter(val => val !== null && !isNaN(val)); // 過濾走所有計唔到嘅廢料
+                        }).filter(val => val !== null && !isNaN(val)); 
                     }
                 
                 } else if (transitType === 'NLB') {
-                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
+                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
+                        etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
+                    }
                 } else if (transitType === 'GMB') {
-                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
+                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
+                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
+                        // 🌟 小巴 API 破譯：route_seq 係 1 就係總站
+                        if (String(json.data[0].route_seq) === '1') {
+                            etas.isDeparting = true;
+                        }
+                    }
                } else if (transitType === 'LRT') {
                     if (json.platform_list && Array.isArray(json.platform_list)) {
                         let rawEtas = [];
+                        let isTerminal = false;
                         json.platform_list.forEach(plat => {
                             if (plat.route_list && Array.isArray(plat.route_list)) {
                                 plat.route_list.forEach(r => {
@@ -450,12 +480,15 @@
                                     if (r.route_no === targetRoute) {
                                         let timeStr = r.time_en || '';
                                         if (timeStr.toLowerCase().includes('arriving')) rawEtas.push(0);
+                                        // 🌟 輕鐵 API 破譯：直接抓取 Departing 字眼
+                                        else if (timeStr.toLowerCase().includes('departing')) { rawEtas.push(0); isTerminal = true; }
                                         else if (timeStr.includes('min')) rawEtas.push(parseInt(timeStr));
                                     }
                                 });
                             }
                         });
                         etas = [...new Set(rawEtas)].filter(n => !isNaN(n)).sort((a, b) => a - b);
+                        if (isTerminal) etas.isDeparting = true;
                     }
                 } else if (transitType === 'MTR_BUS') {
                     if (json.busStop && Array.isArray(json.busStop)) {
@@ -468,7 +501,6 @@
                     }
                 }
             } catch (err) {
-                // 如果解析過程有 Error，印埋出嚟
                 console.error(`[ETA Parse Error] Route: ${routeObj.route}`, err);
             }
             return etas;
