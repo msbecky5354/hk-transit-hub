@@ -23,22 +23,19 @@ function renderHeader() {
 
     <header class="bg-white text-gray-800 p-2 shadow-sm border-b border-gray-100 flex flex-col sticky top-0 z-[100] transition-colors duration-300">
         
-        <!-- 上層：Logo、特別天氣消息、按鈕 -->
         <div class="flex justify-between items-center w-full mb-1 h-10 gap-1">
             
-            <!-- 左側：Logo -->
             <div class="flex items-center shrink-0 h-full cursor-pointer pl-1" onclick="window.location.href='index.html'">
                 <img src="HKTH.png" alt="HK Transit Hub" class="h-9 w-auto object-contain">
+                <span class="ml-1.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider uppercase border border-amber-600/50">
+                    BETA
+                </span>
             </div>
 
-            <!-- 中間：特別天氣預警 (專注於突發/簡短消息，適合手機窄螢幕) -->
             <div id="special-weather-container" class="flex-1 min-w-0 flex items-center justify-center overflow-hidden px-1 h-full opacity-0 transition-opacity duration-500">
-                <!-- 內容會由 fetchSpecialNews 動態載入 -->
-            </div>
+                </div>
             
-            <!-- 右側：按鈕 -->
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 h-full">
-                <!-- 🛠️ 已修復：移除 hidden sm:flex，改為全平台顯示，並加入手機版縮細設定 -->
                 <div class="flex items-center space-x-1 sm:space-x-1.5 text-[10px] sm:text-xs font-bold bg-gray-100 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-full border border-gray-200">
                     <button id="btn-tc" class="lang-btn text-gray-400 transition hover:scale-110" onclick="setLang('tc')">繁</button>
                     <span class="text-gray-300">|</span>
@@ -57,7 +54,6 @@ function renderHeader() {
             </div>
         </div>
 
-        <!-- 下層：常規天氣走馬燈 (還原全寬度，適合長文字) -->
         <div id="weather-badge-container" class="w-full transition-all duration-500 opacity-0"></div>
         
     </header>
