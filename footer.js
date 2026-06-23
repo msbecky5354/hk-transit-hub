@@ -13,19 +13,16 @@ function renderFooter() {
     const bottomNavHtml = `
         <footer class="fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[100] pb-safe transition-colors duration-300" style="padding-bottom: env(safe-area-inset-bottom);">
             <div class="flex justify-around items-center p-3">
-                <!-- 儀表板 (Dashboard) -->
                 <a href="index.html" class="flex flex-col items-center transition-all duration-200 ${isIndex ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-chart-simple text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navHome">儀表板</span>
                 </a>
                 
-                <!-- 新增 (Setup) -->
                 <a href="setup.html" class="flex flex-col items-center transition-all duration-200 ${isSetup ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-circle-plus text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navAdd">新增</span>
                 </a>
 
-                <!-- 設定 (Settings) -->
                 <a href="settings.html" class="flex flex-col items-center transition-all duration-200 ${isSettings ? 'text-[#B8860B] scale-110 drop-shadow-sm' : 'text-gray-400 hover:text-[#B8860B] hover:scale-105'}">
                     <i class="fas fa-gear text-xl mb-1"></i>
                     <span class="text-xs font-bold" data-i18n="navSetup">設定</span>
@@ -49,6 +46,7 @@ function renderFooter() {
     </div>
     `;
 
+    // 🌟 核心更新：在 modalP3 中加入了 Google Analytics 的免責聲明
     const modalHtml = `
     <div id="disclaimerModal" class="hidden fixed inset-0 bg-gray-900/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col max-h-[80vh] border border-gray-100 transition-colors duration-300">
@@ -59,7 +57,7 @@ function renderFooter() {
             <div class="overflow-y-auto text-[13px] text-gray-600 space-y-4 pr-1 mb-2 leading-relaxed transition-colors">
                 <p data-i18n="modalP1"><strong>1. 數據來源與準確性：</strong>本應用程式 (貼地通 HK Transit Hub) 提供的交通到站時間 (ETA) 均擷取自香港政府「資料一線通」及各公共交通營辦商的開放數據。我們不保證數據的絕對準確性、完整性或及時性。</p>
                 <p data-i18n="modalP2"><strong>2. 僅供參考：</strong>本程式的資訊僅供參考之用。強烈建議使用者提早出門，開發團隊對因依賴本程式資訊而導致的任何延誤、損失或不便，概不負責。</p>
-                <p data-i18n="modalP3"><strong>3. 隱私與數據安全：</strong>本程式採用無伺服器 (Serverless) 架構，所有路線設定均儲存於您的設備瀏覽器本地端。我們不會收集、上傳或分享您的個人位置或乘車習慣。</p>
+                <p data-i18n="modalP3"><strong>3. 隱私與數據分析：</strong>您的路線設定僅儲存於本地設備。然而，為改善應用體驗，本程式採用 Google Analytics (分析) 來收集匿名的使用數據（如瀏覽量、設備類型）。這些數據不會包含可識別您個人身份的資訊。使用本程式即表示您同意我們透過 Cookies 及相關技術進行上述分析。</p>
             </div>
             <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="mt-4 w-full bg-[#B8860B] text-white font-bold py-3.5 rounded-2xl active:scale-95 transition-transform text-[15px] shadow-md shadow-yellow-600/30" data-i18n="modalBtn">我明白及接受</button>
         </div>

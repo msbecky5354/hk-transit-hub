@@ -24,7 +24,7 @@ const langDict = {
         modalTitle: "免責聲明及服務條款", 
         modalP1: "<strong>1. 數據來源與準確性：</strong>本應用程式提供的交通到站時間均擷取自開放數據。我們不保證數據的絕對準確性。",
         modalP2: "<strong>2. 僅供參考：</strong>資訊僅供參考，強烈建議使用者提早出門。",
-        modalP3: "<strong>3. 隱私與數據安全：</strong>本程式採用無伺服器架構，所有路線設定均儲存於您的設備。",
+        modalP3: "<strong>3. 隱私與數據分析：</strong>您的路線設定僅儲存於本地設備。然而，為改善應用體驗，本程式採用 Google Analytics (分析) 來收集匿名的使用數據（如瀏覽量、設備類型）。這些數據不會包含可識別您個人身份的資訊。使用本程式即表示您同意我們透過 Cookies 及相關技術進行上述分析。",
         modalBtn: "我明白及接受",
 
         // User Manual
@@ -77,7 +77,7 @@ const langDict = {
         modalTitle: "免责声明及服务条款", 
         modalP1: "<strong>1. 数据来源：</strong>数据取自开放数据。我们不保证绝对准确性。",
         modalP2: "<strong>2. 仅供参考：</strong>资讯仅供参考，请提早出门。",
-        modalP3: "<strong>3. 隐私：</strong>所有设定均储存於您的设备本地端。",
+        modalP3: "<strong>3. 隐私与数据分析：</strong>您的路线设定仅储存于本地设备。然而，为改善应用体验，本程式采用 Google Analytics (分析) 来收集匿名的使用数据（如浏览量、设备类型）。这些数据不会包含可识别您个人身份的信息。使用本程式即表示您同意我们透过 Cookies 及相关技术进行上述分析。",
         modalBtn: "我明白及接受",
 
         // User Manual
@@ -130,7 +130,7 @@ const langDict = {
         modalTitle: "Disclaimer & Terms", 
         modalP1: "<strong>1. Data Source:</strong> Data retrieved from DATA.GOV.HK. Not guaranteed to be accurate.",
         modalP2: "<strong>2. Reference Only:</strong> For reference only. Allow ample time for travel.",
-        modalP3: "<strong>3. Privacy:</strong> Data stored locally on your device.",
+        modalP3: "<strong>3. Privacy & Analytics:</strong> Your route settings are stored locally. However, to improve user experience, this app uses Google Analytics to collect anonymous usage data (e.g., page views, device types). No personally identifiable information is collected. By using this app, you consent to our use of Cookies and related technologies for this purpose.",
         modalBtn: "I Accept",
 
         // User Manual
