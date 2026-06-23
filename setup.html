@@ -458,8 +458,8 @@
                     }
                 }
 
-                // ==========================================
-                // 🟢 小巴模式 (GMB) - 防斷線迴圈 + 智能折返點搜尋
+                                // ==========================================
+                // 🟢 小巴模式 (GMB) - 防斷線迴圈 + 智能折返點搜尋 + 雙向融合補丁
                 // ==========================================
                 if (window.selectedTransit === 'GMB') {
                     const regions = ['NT', 'KLN', 'HKI'];
@@ -469,64 +469,73 @@
                             if (!rRes.ok) continue;
                             const info = await rRes.json();
                             
+                            // 檢查是否找到該路線
                             if (info.data && info.data.length > 0) {
-                                const routeInfo = info.data[0];
-                                const routeId = routeInfo.route_id;
+                                // 🛠️ 補丁：GMB 經常將去程同回程分成兩個獨立的 route_id (data[0] 和 data[1])
+                                // 我哋要同時處理呢兩個 ID，確保起點同終點都有得揀！
                                 
-                                const [outRes, inRes] = await Promise.allSettled([
-                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
-                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
-                                ]);
-                                
-                                const outData = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
-                                const inData = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
+                                for (let i = 0; i < info.data.length; i++) {
+                                    const routeInfo = info.data[i];
+                                    const routeId = routeInfo.route_id;
+                                    
+                                    // GMB 的 route-stop API 通常 1 係去程，2 係回程
+                                    // 每個 route_id 我哋都試下去攞 1 同 2，實行大包圍
+                                    const [outRes, inRes] = await Promise.allSettled([
+                                        fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
+                                        fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
+                                    ]);
+                                    
+                                    const outData = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
+                                    const inData = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
 
-                                let cOut = outData && outData.data && outData.data.route_stops ? outData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
-                                let cIn = inData && inData.data && inData.data.route_stops ? inData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+                                    let cOut = outData && outData.data && outData.data.route_stops ? outData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+                                    let cIn = inData && inData.data && inData.data.route_stops ? inData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
 
-                                if (cOut.length === 0 && cIn.length === 0) continue;
+                                    if (cOut.length === 0 && cIn.length === 0) continue;
 
-                                let offDestTc = routeInfo.directions[0]?.dest_tc || "";
-                                let offDestEn = routeInfo.directions[0]?.dest_en || "";
-                                let offOrigTc = routeInfo.directions[0]?.orig_tc || "";
-                                let offOrigEn = routeInfo.directions[0]?.orig_en || "";
+                                    let offDestTc = routeInfo.directions[0]?.dest_tc || "";
+                                    let offDestEn = routeInfo.directions[0]?.dest_en || "";
+                                    let offOrigTc = routeInfo.directions[0]?.orig_tc || "";
+                                    let offOrigEn = routeInfo.directions[0]?.orig_en || "";
 
-                                const cleanDestName = (name) => name ? name.replace(/\s*\(.*?\)/g, '').replace(/站$/g, '').replace(/總站$/g, '').replace(/交匯處$/g, '').trim() : "";
+                                    const cleanDestName = (name) => name ? name.replace(/\s*\(.*?\)/g, '').replace(/站$/g, '').replace(/總站$/g, '').replace(/交匯處$/g, '').trim() : "";
 
-                                const splitGmbCircularRoute = (stopsArray) => {
-                                    let splitIndex = Math.floor(stopsArray.length / 2);
-                                    let realDestName = "";
-                                    if (offDestTc) {
-                                        realDestName = offDestTc.replace(/\s*\(.*?\)/g, '').trim();
-                                        const keyword = cleanDestName(offDestTc);
-                                        if (keyword.length >= 2) {
-                                            for (let i = 1; i < stopsArray.length - 1; i++) {
-                                                if (stopsArray[i].name_obj.tc.includes(keyword)) splitIndex = i;
+                                    const splitGmbCircularRoute = (stopsArray) => {
+                                        let splitIndex = Math.floor(stopsArray.length / 2);
+                                        let realDestName = "";
+                                        if (offDestTc) {
+                                            realDestName = offDestTc.replace(/\s*\(.*?\)/g, '').trim();
+                                            const keyword = cleanDestName(offDestTc);
+                                            if (keyword.length >= 2) {
+                                                for (let k = 1; k < stopsArray.length - 1; k++) {
+                                                    if (stopsArray[k].name_obj.tc.includes(keyword)) splitIndex = k;
+                                                }
                                             }
                                         }
-                                    }
-                                    const turnaroundStop = stopsArray[splitIndex].name_obj;
-                                    const finalStop = stopsArray[stopsArray.length - 1].name_obj;
-                                    const outDest = realDestName ? { tc: realDestName, en: turnaroundStop.en } : { tc: turnaroundStop.tc, en: turnaroundStop.en };
-                                    return {
-                                        outbound: { dest_name: outDest, stops: stopsArray.slice(0, splitIndex + 1) },
-                                        inbound: { dest_name: { tc: finalStop.tc, en: finalStop.en }, stops: stopsArray.slice(splitIndex) }
+                                        const turnaroundStop = stopsArray[splitIndex].name_obj;
+                                        const finalStop = stopsArray[stopsArray.length - 1].name_obj;
+                                        const outDest = realDestName ? { tc: realDestName, en: turnaroundStop.en } : { tc: turnaroundStop.tc, en: turnaroundStop.en };
+                                        return {
+                                            outbound: { dest_name: outDest, stops: stopsArray.slice(0, splitIndex + 1) },
+                                            inbound: { dest_name: { tc: finalStop.tc, en: finalStop.en }, stops: stopsArray.slice(splitIndex) }
+                                        };
                                     };
-                                };
 
-                                const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
-                                const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
+                                    const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
+                                    const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
 
-                                const outKey = `gmb_${region.toLowerCase()}_out`;
-                                const inKey = `gmb_${region.toLowerCase()}_in`;
+                                    // 為了區分 info.data[0] 和 info.data[1]，我們在 key 後面加個 index
+                                    const outKey = `gmb_${region.toLowerCase()}_${i}_out`;
+                                    const inKey = `gmb_${region.toLowerCase()}_${i}_in`;
 
-                                if (isOutCirc) {
-                                    const res = splitGmbCircularRoute(cOut); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
-                                } else if (isInCirc && cOut.length === 0) {
-                                    const res = splitGmbCircularRoute(cIn); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
-                                } else {
-                                    if (cOut.length > 0) directions[outKey] = { dest_name: { tc: offDestTc || cOut[cOut.length - 1].name_obj.tc, en: offDestEn || cOut[cOut.length - 1].name_obj.en }, stops: cOut };
-                                    if (cIn.length > 0) directions[inKey] = { dest_name: { tc: offOrigTc || cIn[cIn.length - 1].name_obj.tc, en: offOrigEn || cIn[cIn.length - 1].name_obj.en }, stops: cIn };
+                                    if (isOutCirc) {
+                                        const res = splitGmbCircularRoute(cOut); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                    } else if (isInCirc && cOut.length === 0) {
+                                        const res = splitGmbCircularRoute(cIn); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                    } else {
+                                        if (cOut.length > 0) directions[outKey] = { dest_name: { tc: offDestTc || cOut[cOut.length - 1].name_obj.tc, en: offDestEn || cOut[cOut.length - 1].name_obj.en }, stops: cOut };
+                                        if (cIn.length > 0) directions[inKey] = { dest_name: { tc: offOrigTc || cIn[cIn.length - 1].name_obj.tc, en: offOrigEn || cIn[cIn.length - 1].name_obj.en }, stops: cIn };
+                                    }
                                 }
                             }
                         } catch (regionErr) {
@@ -534,6 +543,7 @@
                         }
                     }
                 }
+
 
                 // ==========================================
                 // 🏁 最終處理 (已修復九巴及城巴字典查閱功能)
