@@ -41,7 +41,7 @@ function renderFooter() {
             <span data-i18n="footerCopyright">© 2026 貼地通</span> 
             <span class="mx-1.5">|</span> 
             <span data-i18n="footerDevTeam">開發團隊: </span>
-            <a href="https://www.facebook.com/share/18j3qqx64K/?mibextid=wwXIfr" target="_blank" class="text-[#B8860B] hover:text-yellow-700 underline transition cursor-pointer ml-1" data-i18n="footerDevName">懶人工具駅</a>
+            <a href="https://lazytoolsstation.vercel.app" target="_blank" class="text-[#B8860B] hover:text-yellow-700 underline transition cursor-pointer ml-1" data-i18n="footerDevName">懶人工具駅</a>
         </div>
     </div>
     `;
