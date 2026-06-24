@@ -155,20 +155,22 @@ async function fetchSpecialNews() {
 window.shareApp = function() {
     // 讀取當前語言，並自動加入網址尾部
     const currentLang = localStorage.getItem('transit_app_lang') || 'tc';
-    const shareUrl = window.location.origin + window.location.pathname + '?lang=' + currentLang;
+    
+    // 🌟 乾淨俐落：直接用 ?lang= 參數，唔再搞跳板！
+    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    const baseUrl = window.location.origin + basePath;
+    const shareUrl = baseUrl + '?lang=' + currentLang;
     
     const shareTitle = typeof getTranslation === 'function' ? getTranslation('appName', '貼地通 HK Transit Hub') : '貼地通 HK Transit Hub';
     const shareDesc = typeof getTranslation === 'function' ? getTranslation('shareText', '極速、零廣告的香港交通 ETA 儀表板！') : '極速、零廣告的香港交通 ETA 儀表板！';
     const modalTitle = typeof getTranslation === 'function' ? getTranslation('manualShareTitle', '分享應用程式') : 'Share App';
     
-    // 👇 呢度就係我頭先眼大睇過龍嘅位！已經正式套用變數！
     const btnCopyText = typeof getTranslation === 'function' ? getTranslation('shareCopy', '複製') : '複製';
     const btnSendText = typeof getTranslation === 'function' ? getTranslation('shareSend', '傳送') : '傳送';
     
-    // 生成專屬 QR Code (根據語言變化)
+    // 生成專屬 QR Code
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
 
-    // 檢查是否已經有 Modal，沒有就創建一個
     let modal = document.getElementById('share-modal-container');
     if (!modal) {
         modal = document.createElement('div');
@@ -177,7 +179,6 @@ window.shareApp = function() {
         document.body.appendChild(modal);
     }
 
-    // 寫入 Modal 的 HTML 結構
     modal.innerHTML = `
         <div class="bg-white rounded-2xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300 relative">
             <button onclick="closeShareModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl leading-none">&times;</button>
@@ -202,7 +203,6 @@ window.shareApp = function() {
         </div>
     `;
 
-    // 加上小延遲以觸發 CSS 動畫
     requestAnimationFrame(() => {
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.firstElementChild.classList.remove('scale-95');
