@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -20,27 +21,33 @@
         .transit-pill.selected-green { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #15803d !important; font-weight: bold; }
         .transit-pill.selected-yellow { background-color: #fefce8 !important; border-color: #eab308 !important; color: #a16207 !important; font-weight: bold; }
         .transit-pill.selected-orange { background-color: #fff7ed !important; border-color: #f97316 !important; color: #c2410c !important; font-weight: bold; }
+        
+        /* 🌟 隱藏橫向滑動條，但保留滑動功能 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
     <div id="app-header"></div>
     <main class="max-w-lg mx-auto mt-6 px-4">
         
-      <!-- Step 1: 群組選擇 -->
-        <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
+      <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group"></h2>
             <div class="flex flex-col gap-3">
                 <div class="flex gap-2">
                     <select id="group-select" onchange="checkStep1()" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
                         <option value="" disabled selected data-i18n="selectGroup"></option>
                     </select>
-                    <!-- 新增：編輯群組按鈕 -->
                     <button id="edit-group-btn" onclick="editGroupName()" class="hidden-step bg-gray-50 text-gray-400 hover:text-blue-500 hover:border-blue-300 px-4 py-2 rounded-lg border-2 border-gray-200 transition" title="修改群組名稱">
                         <i class="fas fa-pencil-alt"></i>
                     </button>
                 </div>
                 
-                <!-- 新增：創建群組時的確認區塊 -->
                 <div id="new-group-container" class="hidden-step flex gap-2">
                     <input type="text" id="new-group-input" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500" data-i18n-placeholder="newGroupPlaceholder" placeholder="輸入新群組名稱...">
                     <button onclick="confirmNewGroup()" class="bg-gray-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-gray-900 transition whitespace-nowrap shadow-sm">
@@ -94,7 +101,7 @@
             </div>
 
             <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-3">
-                <div class="flex gap-2 mb-3" id="direction-tabs"></div>
+                <div class="flex overflow-x-auto gap-2 mb-3 pb-2 snap-x hide-scrollbar w-full" id="direction-tabs"></div>
                 <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
                     <option value="" disabled selected data-i18n="selectStop"></option>
                 </select>
@@ -131,7 +138,7 @@
     <script>
         window.selectedGroup = ""; window.selectedTransit = "BUS"; window.currentTransit = "";
         window.currentRouteData = null; window.activeDirection = ''; window.selectedColor = 'red';
-        window.MTR_CSV_DICT = {}; // 👇 呢個就係儲存 CSV 翻譯嘅大腦
+        window.MTR_CSV_DICT = {}; 
         
         if (typeof window.CTB_DICT_CACHE === 'undefined') { window.CTB_DICT_CACHE = {}; }
 
@@ -139,13 +146,11 @@
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
             loadExistingGroups();
-            loadMtrCsvData(); // 一開網頁即刻讀取 CSV！
+            loadMtrCsvData(); 
         };
 
-       // 👇 自動讀取 CSV 並轉換為系統可讀嘅字典
         async function loadMtrCsvData() {
             try {
-                // 🚨 遵命指令：直接強制讀取 GitHub Raw 檔案，無視 Local 環境路徑問題！
                 const githubCsvUrl = 'https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/mtr_lines_and_stations.csv';
                 const res = await fetch(githubCsvUrl);
                 
@@ -171,7 +176,6 @@
                     const tc = cols[tcIdx]?.trim();
                     const en = cols[enIdx]?.trim();
                     if (code && tc) {
-                        // 建立字典：如果搵到 Code，就儲存繁簡英翻譯
                         window.MTR_CSV_DICT[code] = { tc: tc, sc: tc, en: (en || tc) }; 
                     }
                 }
@@ -199,19 +203,17 @@
             const editBtn = document.getElementById('edit-group-btn');
             const step2Area = document.getElementById('step2-area');
             
-            // 隱藏第二步，直到確定了群組
             step2Area.classList.add('hidden-step'); 
 
             if (groupSelect === "NEW_GROUP") { 
                 newGroupContainer.classList.remove('hidden-step'); 
                 editBtn.classList.add('hidden-step');
-                window.selectedGroup = ""; // 還沒按確定前清空
+                window.selectedGroup = ""; 
             } else if (groupSelect) { 
                 newGroupContainer.classList.add('hidden-step'); 
                 window.selectedGroup = groupSelect;
-                step2Area.classList.remove('hidden-step'); // 選擇現有群組直接進入下一步
+                step2Area.classList.remove('hidden-step'); 
                 
-                // 判斷是否為預設群組，預設群組 (groupHome, groupWork) 不給改名
                 if(groupSelect === "groupHome" || groupSelect === "groupWork") {
                     editBtn.classList.add('hidden-step');
                 } else {
@@ -220,7 +222,6 @@
             }
         }
 
-        // 新增：確認新群組按鈕功能
         function confirmNewGroup() {
             const inputVal = document.getElementById('new-group-input').value.trim();
             if (!inputVal) {
@@ -230,7 +231,6 @@
             window.selectedGroup = inputVal;
             document.getElementById('step2-area').classList.remove('hidden-step');
             
-            // UI 視覺回饋：輸入框閃一下綠色代表成功
             const inputEl = document.getElementById('new-group-input');
             inputEl.classList.add('border-green-500', 'bg-green-50');
             setTimeout(() => {
@@ -238,7 +238,6 @@
             }, 800);
         }
 
-        // 新增：修改現有群組名稱功能
         function editGroupName() {
             const oldName = window.selectedGroup;
             if(!oldName || oldName === "NEW_GROUP") return;
@@ -249,7 +248,6 @@
             if (newName !== null && newName.trim() !== "" && newName.trim() !== oldName) {
                 const trimmedNewName = newName.trim();
                 
-                // 更新 LocalStorage 中所有屬於此群組的路線
                 let routes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
                 routes = routes.map(r => {
                     if(r.group === oldName) {
@@ -259,11 +257,9 @@
                 });
                 localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
                 
-                // 更新全域變數並重新載入下拉選單
                 window.selectedGroup = trimmedNewName;
                 loadExistingGroups();
                 
-                // 將選單設為剛改好的新名字並觸發 UI 更新
                 document.getElementById('group-select').value = trimmedNewName;
                 checkStep1(); 
             }
@@ -337,11 +333,7 @@
                 let directions = {};
                 let transitType = window.selectedTransit;
 
-                // ==========================================
-                // 🚌 巴士模式 (九巴, 城巴, 嶼巴, 港鐵巴士)
-                // ==========================================
                 if (window.selectedTransit === 'BUS') {
-                    // 同步發出 4 個請求 (如果有 Error 自動食咗佢，唔會阻住其他)
                     const [kmbRes, ctbRes, nlbRes, mtrBusRes] = await Promise.allSettled([
                         fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/${routeInput}/outbound/1`).catch(()=>null),
                         fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route/CTB/${routeInput}`).catch(()=>null),
@@ -354,7 +346,6 @@
                     const nlbInfo = nlbRes.status === 'fulfilled' && nlbRes.value && nlbRes.value.ok ? await nlbRes.value.json() : null;
                     const mtrBusInfo = mtrBusRes.status === 'fulfilled' && mtrBusRes.value && mtrBusRes.value.ok ? await mtrBusRes.value.json() : null;
 
-                    // 🚨 1. 港鐵巴士 (MTR Bus) 分流邏輯
                     if (mtrBusInfo && mtrBusInfo.busStop && mtrBusInfo.busStop.length > 0) {
                         let stopsOut = [], stopsIn = [];
                         mtrBusInfo.busStop.forEach(stop => {
@@ -363,7 +354,6 @@
                                 name_obj: { tc: stop.busStopId, en: stop.busStopId },
                                 api_url: `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule?routeName=${routeInput}`
                             };
-                            // 透過 ID 判斷: U = 回程
                             if (stop.busStopId.includes('-U')) stopsIn.push(stopObj);
                             else stopsOut.push(stopObj);
                         });
@@ -371,7 +361,6 @@
                         if (stopsIn.length > 0) directions['mtrbus_inbound'] = { dest_name: { tc: `${routeInput} 回程`, en: `${routeInput} Inbound` }, stops: stopsIn };
                     }
 
-                    // 🔴 2. 九巴 / 龍運 (KMB / LWB)
                     if (kmbInfo && kmbInfo.data) {
                         const [outRes, inRes] = await Promise.allSettled([
                             fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${routeInput}/outbound/1`),
@@ -392,7 +381,6 @@
                         }
                     }
 
-                    // 🟡 3. 城巴 (CTB) + 循環線拆分
                     if (ctbInfo && ctbInfo.data && ctbInfo.data.route === routeInput) {
                         const [outRes, inRes] = await Promise.allSettled([
                             fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/CTB/${routeInput}/outbound`),
@@ -430,7 +418,6 @@
                         }
                     }
 
-                    // 🔵 4. 嶼巴 (NLB)
                     if (nlbInfo && nlbInfo.routes) {
                         const matchedRoutes = nlbInfo.routes.filter(r => r.routeNo.toUpperCase() === routeInput);
                         const getDest = (name) => name && name.includes('>') ? name.split('>')[1].trim() : name;
@@ -458,9 +445,6 @@
                     }
                 }
 
-                                // ==========================================
-                // 🟢 小巴模式 (GMB) - 防斷線迴圈 + 智能折返點搜尋 + 雙向融合補丁
-                // ==========================================
                 if (window.selectedTransit === 'GMB') {
                     const regions = ['NT', 'KLN', 'HKI'];
                     for (const region of regions) {
@@ -469,17 +453,11 @@
                             if (!rRes.ok) continue;
                             const info = await rRes.json();
                             
-                            // 檢查是否找到該路線
                             if (info.data && info.data.length > 0) {
-                                // 🛠️ 補丁：GMB 經常將去程同回程分成兩個獨立的 route_id (data[0] 和 data[1])
-                                // 我哋要同時處理呢兩個 ID，確保起點同終點都有得揀！
-                                
                                 for (let i = 0; i < info.data.length; i++) {
                                     const routeInfo = info.data[i];
                                     const routeId = routeInfo.route_id;
                                     
-                                    // GMB 的 route-stop API 通常 1 係去程，2 係回程
-                                    // 每個 route_id 我哋都試下去攞 1 同 2，實行大包圍
                                     const [outRes, inRes] = await Promise.allSettled([
                                         fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
                                         fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
@@ -524,7 +502,6 @@
                                     const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
                                     const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
 
-                                    // 為了區分 info.data[0] 和 info.data[1]，我們在 key 後面加個 index
                                     const outKey = `gmb_${region.toLowerCase()}_${i}_out`;
                                     const inKey = `gmb_${region.toLowerCase()}_${i}_in`;
 
@@ -544,30 +521,23 @@
                     }
                 }
 
-
-                // ==========================================
-                // 🏁 最終處理 (已修復九巴及城巴字典查閱功能)
-                // ==========================================
                 if (Object.keys(directions).length === 0) throw new Error(`找不到路線 ${routeInput}。`);
 
-                // 準備字典 Cache
                 if (typeof window.CTB_DICT_CACHE === 'undefined') window.CTB_DICT_CACHE = {};
-                if (typeof window.KMB_DICT_CACHE === 'undefined') window.KMB_DICT_CACHE = {}; // 👈 新增九巴字典
+                if (typeof window.KMB_DICT_CACHE === 'undefined') window.KMB_DICT_CACHE = {}; 
 
                 let missingCtbStops = new Set();
                 let missingKmbStops = new Set();
 
-                // 收集所有需要查字典嘅站點 ID
                 Object.values(directions).forEach(dir => {
                     dir.stops.forEach(s => {
                         if (s.name_obj.tc.includes('政府數據載入中')) {
                             if (s.api_url.includes('citybus')) missingCtbStops.add(s.stop_id);
-                            if (s.api_url.includes('kmb')) missingKmbStops.add(s.stop_id); // 👈 認出九巴 API Link
+                            if (s.api_url.includes('kmb')) missingKmbStops.add(s.stop_id); 
                         }
                     });
                 });
 
-                // 🟡 處理城巴字典
                 if (missingCtbStops.size > 0) {
                     const stopsToFetch = Array.from(missingCtbStops).filter(id => !window.CTB_DICT_CACHE[id]);
                     await Promise.all(stopsToFetch.map(async id => {
@@ -585,7 +555,6 @@
                     });
                 }
 
-                // 🔴 處理九巴字典 (全新加入)
                 if (missingKmbStops.size > 0) {
                     const stopsToFetch = Array.from(missingKmbStops).filter(id => !window.KMB_DICT_CACHE[id]);
                     await Promise.all(stopsToFetch.map(async id => {
@@ -603,7 +572,6 @@
                     });
                 }
 
-                // 🚇 補完 MTR Bus 中文名
                 if (window.MTR_BUS_DICT) {
                     Object.keys(directions).forEach(dirKey => {
                         if (dirKey.includes('mtrbus')) {
@@ -615,9 +583,7 @@
                     });
                 }
 
-                // 設定最終資料並顯示 UI
                 window.currentRouteData = { route: routeInput, transitType: transitType, directions: directions };
-                // ... (下面維持不變 renderDirectionTabs 等等)
                 window.currentTransit = transitType;
                 window.activeDirection = Object.keys(directions)[0];
 
@@ -662,7 +628,6 @@
                 let destText = '';
                 const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
                 
-                // 👇 方向標籤優先使用 CSV 翻譯！
                 if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[dir.dest_key]) {
                     destText = window.MTR_CSV_DICT[dir.dest_key][langKey];
                 } else if (dir.dest_name && typeof dir.dest_name === 'object') { 
@@ -686,7 +651,8 @@
                 const themeClasses = { 'BUS': 'text-red-600 border-red-400', 'LWB': 'text-orange-500 border-orange-400', 'GMB': 'text-green-600 border-green-400', 'MTR': 'text-yellow-600 border-yellow-400', 'LRT': 'text-orange-600 border-orange-400' };
                 const activeClasses = `bg-white shadow-sm border ${themeClasses[transitKey] || 'text-red-600 border-red-400'}`;
                 
-                btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
+                // 🌟 新增：px-4, shrink-0, whitespace-nowrap, snap-start，將 flex-1 移除
+                btn.className = `px-4 py-2 text-sm font-bold rounded-md transition shrink-0 whitespace-nowrap snap-start ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
                 btn.textContent = label;
                 btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };
                 container.appendChild(btn);
@@ -711,7 +677,6 @@
                 let stopName = '';
                 const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
 
-                // 👇 站點下拉選單優先使用 CSV 翻譯！
                 if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[stop.stop_id]) {
                     stopName = window.MTR_CSV_DICT[stop.stop_id][langKey];
                 } else if (stop.name_obj && stop.name_obj[langKey]) { 
@@ -768,7 +733,6 @@
                 else if (destName.includes('港鐵')) finalTransitType = 'MTR'; 
             }
 
-            
             const newRouteConfig = {
                 id: `item_${Date.now()}`, group: window.selectedGroup, transitType: finalTransitType, route: window.currentRouteData.route,
                 route_key: window.currentRouteData.route_key || null, stop_id: stopData.stop_id,
@@ -784,3 +748,5 @@
     </script>
 </body>
 </html>
+
+
