@@ -1,4 +1,13 @@
+// 檢查網址有沒有 ?lang= 參數，有的話就優先套用並儲存
+const urlParams = new URLSearchParams(window.location.search);
+const urlLang = urlParams.get('lang');
+if (urlLang && ['tc', 'sc', 'en'].includes(urlLang)) {
+    localStorage.setItem('transit_app_lang', urlLang);
+}
+
+// 讀取最終語言設定
 let currentLang = localStorage.getItem('transit_app_lang') || 'tc';
+
 
 const langDict = {
     tc: {
