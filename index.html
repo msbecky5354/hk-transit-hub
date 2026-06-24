@@ -3,26 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 🌟 SEO 搜尋引擎優化核心區 (雙語版) 🌟 -->
-    <title data-i18n="appName">貼地通 HK Transit Hub</title>
-    <meta name="description" content="貼地通 (HK Transit Hub) - 極速、零廣告交通 ETA 儀表板。一鍵查看香港巴士、港鐵、小巴實時到站時間。Real-time ETA dashboard for Hong Kong transit (KMB, CTB, MTR, Minibus). 100% Free & No Ads!">
+    <title data-i18n="appName">HK Transit Hub 貼地通</title>
+    <meta name="description" content="Zero Ads Transit Dashboard. 一鍵查看九巴、城巴、港鐵、小巴即時到站時間。">
     <meta name="keywords" content="貼地通, HK Transit Hub, 交通ETA, 香港巴士, 九巴到站時間, 城巴ETA, 港鐵時間表, 小巴ETA, 免費交通App, hk eta, hong kong bus, mtr eta">
     
-    <!-- 🌟 社交媒體分享預覽 Open Graph (雙語版) 🌟 -->
-    <meta property="og:title" content="貼地通 HK Transit Hub | 極速零廣告交通 ETA">
-    <meta property="og:description" content="一鍵查看九巴、城巴、港鐵、小巴即時到站時間 | Real-time ETA for KMB, CTB, MTR & Minibus. 100% Free!">
+    <meta property="og:title" content="HK Transit Hub 貼地通 | Real-time ETA">
+    <meta property="og:description" content="Zero Ads Transit Dashboard. 一鍵查看九巴、城巴、港鐵、小巴即時到站時間。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://hk-transit-hub.vercel.app/">
     
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3D9W2FH09X"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3D9W2FH09X"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-  gtag('config', 'G-3D9W2FH09X');
-</script>
+      gtag('config', 'G-3D9W2FH09X');
+    </script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -40,7 +37,6 @@
         .swipe-content { position: relative; z-index: 10; background: white; transition: transform 0.2s ease-out; touch-action: pan-y; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         
-        /* 🛠️ CSS 封印，配合補丁使用 */
         .drag-handle, .group-title-handle { 
             cursor: grab; 
             touch-action: none !important; 
@@ -48,7 +44,6 @@
             user-select: none; 
             -webkit-touch-callout: none !important; 
         }
-        /* 確保手指點擊時，事件落在把手 div，而不是 icon 身上 */
         .drag-handle i, .group-title-handle i { pointer-events: none; }
         
         .drag-handle:active, .group-title-handle:active { cursor: grabbing; }
@@ -75,7 +70,6 @@
 
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
         <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
-            <!-- 👇 補回 i18n 標籤 -->
             <h3 class="font-bold text-lg mb-4 text-gray-800" data-i18n="editRouteTitle">✏️ 編輯路線花名</h3>
             <label class="block text-sm font-medium text-gray-600 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
             <input type="text" id="edit-alias-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-5 focus:border-red-500 focus:outline-none transition">
@@ -231,13 +225,12 @@
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
                 groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
-                // 🛠️ 配合補丁：關閉 forceFallback，畀返標準 Drag API 做嘢
                 const listSortable = new Sortable(listDiv, { 
                     handle: '.drag-handle', 
                     animation: 150, 
                     ghostClass: 'sortable-ghost',
-                    forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
-                    delay: 100,           // <-- 畀少少 delay 等系統準備
+                    forceFallback: false, 
+                    delay: 100,           
                     delayOnTouchOnly: true,
                     onEnd: function () { updateSorting(); } 
                 });
@@ -249,7 +242,7 @@
                 handle: '.group-title-handle', 
                 animation: 150, 
                 ghostClass: 'sortable-ghost',
-                forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
+                forceFallback: false, 
                 delay: 100,
                 delayOnTouchOnly: true,
                 onEnd: function () { updateGroupSorting(); } 
@@ -273,17 +266,15 @@
                 rawDestName = rawDestName.replace(regex, '').trim();
             }
 
-                        let cleanDestName = rawDestName;
+            let cleanDestName = rawDestName;
             if (cleanDestName.includes('往 ')) cleanDestName = cleanDestName.split('往 ').pop().trim();
             else if (cleanDestName.toLowerCase().includes(' to ')) cleanDestName = cleanDestName.split(/ to /i).pop().trim();
             
-            // 🛠️ 補丁：移除所有括號內容作精準比較，解決「深圳灣 往 深圳灣(嶼巴)」嘅反智問題
             const regexClean = /\s*[\(（][^\)）]*[\)）]/g;
             const baseStop = stopName.replace(regexClean, '').trim();
             const baseDest = cleanDestName.replace(regexClean, '').trim();
             
             let directionStr = "";
-            // 升級判斷：起點終點名一樣 (無視括號)，或者終點名包埋起點名，就當佢係循環線
             if (cleanDestName && baseStop !== baseDest && !baseDest.includes(baseStop)) {
                 const toWord = currentLang === 'en' ? ' To ' : ' 往 '; 
                 directionStr = `${stopName}${toWord}${cleanDestName}`;
@@ -367,7 +358,6 @@
                 const display = document.getElementById(`eta-display-${route.id}`);
                 let etas = []; let directSuccess = false;
                 
-                // 1. MTR Bus 需要使用 POST Request
                 if (route.transitType === 'MTR_BUS') {
                     try {
                         let routeName = route.route || '';
@@ -385,7 +375,6 @@
                         console.warn(`MTR Bus ETA 讀取失敗: ${route.route}`, mtrBusError);
                     }
                 } 
-                // 2. 其他公共交通工具使用標準 GET Request
                 else {
                     try {
                         const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
@@ -402,9 +391,8 @@
                     }
                 }
 
-                // 🌟 更新 UI 顯示 (完美保留三語即將開出/抵達邏輯)
                 if (display) {
-                    const isTerminalStart = etas.isDeparting === true; // 從陣列屬性讀取是否總站
+                    const isTerminalStart = etas.isDeparting === true; 
                     
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
@@ -415,11 +403,10 @@
                             let unit = `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
                             
                             if (min === 0) {
-                                // 🌟 根據 isDeparting 判斷，完美支援三語
                                 const arrivingText = getTranslation('arriving', '即將抵達');
                                 const departingText = getTranslation('departing', '即將開出');
                                 timeText = isTerminalStart ? departingText : arrivingText;
-                                unit = ""; // 0分鐘唔需要顯示「分鐘」兩個字
+                                unit = ""; 
                             }
                             
                             return `<span class="${colorClass} font-black text-xl">${timeText}</span>${unit}`;
