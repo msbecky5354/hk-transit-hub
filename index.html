@@ -23,7 +23,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     
     <script src="lang.js?v=31"></script>
@@ -45,7 +44,6 @@
             -webkit-touch-callout: none !important; 
         }
         .drag-handle i, .group-title-handle i { pointer-events: none; }
-        
         .drag-handle:active, .group-title-handle:active { cursor: grabbing; }
         .group-title-handle { padding: 0.5rem 0; }
         .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; border: 2px dashed #cbd5e1; }
@@ -111,6 +109,8 @@
                     if (r.apiUrl.includes('etabus.gov.hk')) { r.transitType = 'KMB'; changed = true; }
                     else if (r.apiUrl.includes('citybus-nwfb')) { r.transitType = 'CTB'; changed = true; }
                     else if (r.apiUrl.includes('nlb')) { r.transitType = 'NLB'; changed = true; }
+                    // ✅ 完美補底：如果舊用家有被存錯咗嘅 MTR Bus，開 App 瞬間自動修正
+                    else if (r.apiUrl.includes('/mtr/bus/getSchedule')) { r.transitType = 'MTR_BUS'; changed = true; } 
                 }
                 if (r.transitType === 'KMB' && r.apiUrl && r.apiUrl.match(/\/kmb\/eta\/[A-Z0-9-]+\/[A-Z0-9-]+\/2$/i)) {
                     r.apiUrl = r.apiUrl.replace(/\/2$/, '/1');
@@ -159,6 +159,7 @@
             }
         };
 
+        // ✨ 百分百保留你嘅原裝 Logo
         function getTransitDisplayHtml(transitType) {
            const safeType = transitType ? transitType.toUpperCase() : 'BUS';
             const langKeyMap = { 'KMB': 'transitKMB', 'LWB': 'transitLWB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB', 'MTR': 'transitMTR', 'LRT': 'transitLRT', 'NLB': 'transitNLB', 'GMB': 'transitGMB_new', 'BUS': 'transitBUS', 'MTR_BUS': 'transitMTR' };
@@ -283,7 +284,6 @@
                 directionStr = `${stopName}${loopWord}`;
             }
 
-
             let mainTitle = directionStr; let subTitleHtml = '';
             if (route.isCustomAlias && route.alias && route.alias.trim() !== '') { mainTitle = route.alias; subTitleHtml = `<div class="text-[11px] text-gray-500 truncate mt-0.5">${directionStr}</div>`; }
             if (!mainTitle) mainTitle = route.route || "Transit Route";
@@ -299,6 +299,7 @@
             let badgeHtml = '';
             
             if (route.transitType === 'MTR') {
+                // ✨ 完璧歸趙：重新使用你嘅 MTR.png Logo
                 let bigIcon = '<div class="h-10 flex items-center justify-center mb-0.5"><img src="MTR.png" alt="MTR" class="h-9 object-contain" style="transform: scale(1.6); mix-blend-mode: multiply;"></div>'; 
                 const typeName = getTranslation('transitMTR', '港鐵');
                 badgeHtml = `<div class="flex flex-col items-center justify-center w-full mt-1">${bigIcon}<span class="text-[10px] text-gray-500 font-bold whitespace-nowrap">${typeName}</span></div>`;
