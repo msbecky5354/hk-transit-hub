@@ -39,12 +39,18 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>基礎操作 (Basic Usage)",
         manualAddTitle: "新增路線 (Add Routes)", manualAddDesc: "點擊底部 <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> 新增</strong> 進入設定中心，選擇交通工具、搜尋路線，並將其釘選到你的儀表板。",
         manualDragTitle: "排序與整理 (Drag & Reorder)", manualDragDesc: "在儀表板中，長按群組標題旁邊的 <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> 或卡片右側的 <i class='fas fa-bars text-gray-400 mx-1'></i>，即可上下拖曳，將最常用的路線排在最頂。",
-        
-        // 👇 重點更新：第 3 點加入編輯功能
         manualDelTitle: "編輯與刪除路線 (Edit & Delete)", manualDelDesc: "將路線卡片向左滑動 <strong>(Swipe Left)</strong>，即可喚出隱藏選單。點擊 <i class='fas fa-pen text-gray-400 mx-1'></i> 可為路線自訂專屬花名；點擊紅色垃圾桶即可刪除。你亦可點擊群組標題旁的 <i class='fas fa-trash-can text-red-500 mx-1'></i> 一鍵刪除整個群組。",
-        
         manualBackupTitle: "數據備份 (Backup Data)", manualBackupDesc: "點擊底部 <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> 設定</strong>，你可以隨時將目前的路線佈局匯出成 JSON 檔案。日後更換手機或清理瀏覽器數據後，只需匯入該檔案即可瞬間復原。",
         
+        // FAQ
+        manualFaqTitle: "<i class='fas fa-question-circle text-[#B8860B] mr-2'></i>常見問題解答 (FAQ)",
+        manualFaq1Q: "❓ 點解設定港鐵路線時，無得揀「落車站」？",
+        manualFaq1A: "💡 因為「貼地通」的設計理念是作為你的專屬「實時電子報站機」，而不是地圖導航！畫面上顯示的終點站（例如：荃灣 / 中環），其實是指<strong>列車的行車方向</strong>。你只需選擇你身處的車站及行車方向，系統便會秒速顯示下班車時間。由於你在哪裡落車並不影響列車到站時間，所以我們省略了此步驟為你節省時間！",
+        manualFaq2Q: "❓ 點解凌晨時間，港鐵會顯示要等百幾分鐘先有車？",
+        manualFaq2A: "💡 哈哈，這絕對不是系統壞了！本程式的所有時間數據，<strong>100% 直接讀取自政府及公共交通機構的官方實時 API，並經過開發團隊多重人肉測試</strong>。在凌晨等非服務時間，官方系統有時會提前發佈明早的首班車時間。所以當你見到這類「幽靈時間」，其實代表當日已經收車啦！",
+        manualFaq3Q: "❓ 點解正常上班時間搭巴士，有時會顯示「暫無班次」？",
+        manualFaq3A: "💡 這同樣是官方數據的真實反映。部分巴士路線班次較疏落，如果你剛好錯過了一班，而官方系統暫時未能預測下一班車的時間，就會顯示「暫無班次」。請放心，這並非 App 故障，我們只是將官方數據庫的狀態如實呈現，建議你可以稍等幾分鐘後再刷新看看！",
+
         // Share App
         shareText: "極速、零廣告的香港交通 ETA 儀表板！",
         linkCopied: "🔗 連結已複製到剪貼簿！",
@@ -92,12 +98,18 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>基础操作 (Basic Usage)",
         manualAddTitle: "新增路线 (Add Routes)", manualAddDesc: "点击底部 <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> 新增</strong> 进入设定中心，选择交通工具、搜寻路线，并将其钉选到你的仪表板。",
         manualDragTitle: "排序与整理 (Drag & Reorder)", manualDragDesc: "在仪表板中，长按群组标题旁边的 <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> 或卡片右侧的 <i class='fas fa-bars text-gray-400 mx-1'></i>，即可上下拖曳，将最常用的路线排在最顶。",
-        
-        // 👇 重點更新：第 3 點加入編輯功能
         manualDelTitle: "编辑与删除路线 (Edit & Delete)", manualDelDesc: "将路线卡片向左滑动 <strong>(Swipe Left)</strong>，即可唤出隐藏选单。点击 <i class='fas fa-pen text-gray-400 mx-1'></i> 可为路线自订专属花名；点击红色垃圾桶即可删除。你亦可点击群组标题旁的 <i class='fas fa-trash-can text-red-500 mx-1'></i> 一键删除整个群组。",
-        
         manualBackupTitle: "数据备份 (Backup Data)", manualBackupDesc: "点击底部 <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> 设定</strong>，你可以随时将目前的路线布局汇出成 JSON 档案。日后更换手机或清理浏览器数据后，只需汇入该档案即可瞬间复原。",
         
+        // FAQ
+        manualFaqTitle: "<i class='fas fa-question-circle text-[#B8860B] mr-2'></i>常见问题解答 (FAQ)",
+        manualFaq1Q: "❓ 为什么设定港铁路线时，无法选择「下车站」？",
+        manualFaq1A: "💡 因为「贴地通」的设计理念是作为你的专属「实时电子报站机」，而不是地图导航！画面上显示的终点站（例如：荃湾 / 中环），其实是指<strong>列车的行车方向</strong>。你只需选择你身处的车站及行车方向，系统便会秒速显示下班车时间。由于你在哪里下车并不影响列车到站时间，所以我们省略了此步骤为你节省时间！",
+        manualFaq2Q: "❓ 为什么凌晨时间，港铁会显示要等一百多分钟才有车？",
+        manualFaq2A: "💡 哈哈，这绝对不是系统坏了！本程序的所有时间数据，<strong>100% 直接读取自政府及公共交通机构的官方实时 API，并经过开发团队多重人肉测试</strong>。在凌晨等非服务时间，官方系统有时会提前发布明早的首班车时间。所以当你见到这类「幽灵时间」，其实代表当日已经收车啦！",
+        manualFaq3Q: "❓ 为什么正常上班时间搭巴士，有时会显示「暂无班次」？",
+        manualFaq3A: "💡 这同样是官方数据的真实反映。部分巴士路线班次较疏落，如果你刚好错过了一班，而官方系统暂时未能预测下一班车的时间，就会显示「暂无班次」。请放心，这并非 App 故障，我们只是将官方数据库的状态如实呈现，建议你可以稍等几分钟后再刷新看看！",
+
         // Share App
         shareText: "极速、零广告的香港交通 ETA 仪表板！",
         linkCopied: "🔗 连结已复制到剪贴簿！",
@@ -145,12 +157,18 @@ const langDict = {
         manualBasicTitle: "<i class='fas fa-hand-pointer text-blue-500 mr-2'></i>Basic Usage",
         manualAddTitle: "Add Routes", manualAddDesc: "Tap <strong><i class='fas fa-circle-plus text-[#B8860B] mx-1'></i> Add</strong> at the bottom to enter the Setup Hub. Select your transit type, search for a route, and pin it to your dashboard.",
         manualDragTitle: "Drag & Reorder", manualDragDesc: "On the dashboard, long-press the <i class='fas fa-grip-vertical text-gray-400 mx-1'></i> next to a group title or <i class='fas fa-bars text-gray-400 mx-1'></i> on a card to drag and reorder them to your preference.",
-        
-        // 👇 重點更新：第 3 點加入編輯功能
         manualDelTitle: "Edit & Delete Routes", manualDelDesc: "<strong>Swipe Left</strong> on any route card to reveal the hidden menu. Tap <i class='fas fa-pen text-gray-400 mx-1'></i> to customize the route alias, or tap the red trash icon to delete it. You can also tap the <i class='fas fa-trash-can text-red-500 mx-1'></i> next to a group title to delete the entire group.",
-        
         manualBackupTitle: "Backup Data", manualBackupDesc: "Tap <strong><i class='fas fa-gear text-[#B8860B] mx-1'></i> Setup</strong> to export your current dashboard layout as a JSON file. If you switch phones, simply import this file to restore everything instantly.",
         
+        // FAQ
+        manualFaqTitle: "<i class='fas fa-question-circle text-[#B8860B] mr-2'></i>Frequently Asked Questions (FAQ)",
+        manualFaq1Q: "❓ Why can't I select an 'Alighting Station' for MTR routes?",
+        manualFaq1A: "💡 Because Transit Hub is designed as your personal 'real-time departure board', not a navigation map! The terminal stations shown (e.g., Tsuen Wan / Central) actually indicate the <strong>train's direction</strong>. You only need to select your current station and the direction, and the system will instantly show the next train's arrival time. Since your alighting station doesn't affect the train's arrival time at your current stop, we skipped this step to save your time!",
+        manualFaq2Q: "❓ Why do MTR routes show waiting times of over 100 minutes during early morning hours?",
+        manualFaq2A: "💡 Haha, the system is definitely not broken! All time data in this app is <strong>100% directly retrieved from the official real-time APIs of the government and public transport operators, and has been rigorously tested by our team</strong>. During non-service hours like late night/early morning, official systems sometimes release the schedule for the first train of the next day in advance. So when you see these 'ghost times', it simply means train services have ended for the day!",
+        manualFaq3Q: "❓ Why do buses sometimes show 'No Scheduled Departure' during normal commuting hours?",
+        manualFaq3A: "💡 This is also a true reflection of the official data. Some bus routes have infrequent services. If you just missed a bus and the official system cannot temporarily predict the next one, it will show 'No Scheduled Departure'. Rest assured, this is not an app malfunction; we are simply reflecting the exact status from the official database. We suggest waiting a few minutes and refreshing the page!",
+
         // Share App
         shareText: "Lightning-fast, ad-free HK Transit ETA Dashboard!",
         linkCopied: "🔗 Link copied to clipboard!",
