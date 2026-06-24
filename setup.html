@@ -6,11 +6,11 @@
     <title data-i18n="setupTitle"></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="lang.js?v=64"></script>
-    <script src="config.js?v=64"></script> 
+    <script src="lang.js?v=65"></script>
+    <script src="config.js?v=65"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=64"></script>
+    <script src="data-static.js?v=65"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
@@ -27,6 +27,11 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9; }
+        
+        /* 🌟 自訂 Dropdown 專用 Scrollbar */
+        #custom-select-list::-webkit-scrollbar { width: 6px; }
+        #custom-select-list::-webkit-scrollbar-track { background: transparent; }
+        #custom-select-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
@@ -89,13 +94,19 @@
                 <p id="loading-text" class="text-red-500 text-sm mt-2 font-medium text-center hidden-step" data-i18n="loading"></p>
             </div>
 
-            <div id="static-route-area" class="mb-4 hidden-step">
-                <select id="static-route-select" onchange="loadStaticRoute()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-bold focus:outline-none focus:border-red-500 bg-white">
-                    <option value="" disabled selected data-i18n="static_select_placeholder"></option>
-                </select>
+            <div id="static-route-area" class="mb-4 hidden-step relative">
+                <div id="custom-dropdown-container" class="relative">
+                    <button type="button" id="custom-select-btn" onclick="toggleDropdown()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-bold bg-white focus:border-red-500 flex justify-between items-center text-left transition shadow-sm h-[52px]">
+                        <div id="custom-select-text" class="flex items-center text-gray-400 truncate w-full pr-2" data-i18n="static_select_placeholder">請選擇綫路...</div>
+                        <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform duration-200 shrink-0" id="custom-dropdown-icon"></i>
+                    </button>
+                    <div id="custom-select-list" class="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-2xl max-h-72 overflow-y-auto hidden opacity-0 transition-opacity duration-200 py-1">
+                        </div>
+                </div>
+                <input type="hidden" id="static-route-select">
             </div>
 
-            <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-3">
+            <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-4 mt-2">
                 <div class="flex overflow-x-auto gap-2 mb-3 pb-3 snap-x custom-scrollbar w-full cursor-grab select-none" id="direction-tabs"></div>
                 <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
                     <option value="" disabled selected data-i18n="selectStop"></option>
@@ -115,7 +126,6 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel"></label>
                     <div class="flex gap-3 mt-2 flex-wrap" id="color-picker">
-                        <!-- 預設顏色 -->
                         <div class="color-dot bg-red-500 selected" data-color="red" onclick="selectColor(this)"></div>
                         <div class="color-dot bg-blue-500" data-color="blue" onclick="selectColor(this)"></div>
                         <div class="color-dot bg-green-500" data-color="green" onclick="selectColor(this)"></div>
@@ -136,7 +146,7 @@
         window.currentRouteData = null; window.activeDirection = ''; window.selectedColor = 'red';
         window.MTR_CSV_DICT = {}; 
         
-        // ✨ 官方輕鐵路線及專屬顏色字典
+        // ✨ 跟足 index.html 嘅官方顏色
         const LRT_INFO_MAP = {
             'LRT-505': { name: '505 三聖至兆康', color: '#e83828', enName: '505 Sam Shing to Siu Hong' },
             'LRT-507': { name: '507 屯門碼頭至田景', color: '#008f4f', enName: '507 Tuen Mun Ferry Pier to Tin King' },
@@ -150,6 +160,13 @@
             'LRT-751': { name: '751 天逸至友愛', color: '#f38a00', enName: '751 Tin Yat to Yau Oi' },
             'LRT-761P': { name: '761P 天逸至元朗', color: '#68228b', enName: '761P Tin Yat to Yuen Long' }
         };
+
+        // ✨ 港鐵官方顏色
+        const MTR_COLOR_MAP = {
+            'TWL': '#e2231a', 'KTL': '#00ab4e', 'ISL': '#0071ce', 'TCL': '#f68f26',
+            'TKL': '#6b208b', 'EAL': '#53b7e8', 'TML': '#5d4037', 'SIL': '#b5a800',
+            'AEL': '#00888a', 'DRL': '#f173ac'
+        };
         
         if (typeof window.CTB_DICT_CACHE === 'undefined') { window.CTB_DICT_CACHE = {}; }
 
@@ -159,6 +176,15 @@
             loadExistingGroups();
             loadMtrCsvData(); 
             initDragToScroll(); 
+            
+            // 🌟 點擊空白處自動收起客製化選單
+            document.addEventListener('click', function(event) {
+                const container = document.getElementById('custom-dropdown-container');
+                const list = document.getElementById('custom-select-list');
+                if (container && list && !container.contains(event.target) && !list.classList.contains('hidden')) {
+                    toggleDropdown();
+                }
+            });
         };
 
         function initDragToScroll() {
@@ -289,6 +315,40 @@
             }
         }
 
+        // 🌟 打開/收起 Custom Dropdown
+        function toggleDropdown() {
+            const list = document.getElementById('custom-select-list');
+            const icon = document.getElementById('custom-dropdown-icon');
+            
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                setTimeout(() => list.classList.remove('opacity-0'), 10);
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                list.classList.add('opacity-0');
+                setTimeout(() => list.classList.add('hidden'), 200);
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // 🌟 處理 Custom Dropdown 選項點擊
+        function selectStaticRoute(key, type, displayName, colorHex) {
+            // 寫入隱藏 input
+            document.getElementById('static-route-select').value = key;
+            
+            // 更新 Button 文字及保留顏色線
+            const btnText = document.getElementById('custom-select-text');
+            btnText.innerHTML = `
+                <div class="flex items-center w-full">
+                    <div class="w-2.5 h-6 rounded mr-3 shrink-0 shadow-sm border border-gray-200" style="background-color: ${colorHex};"></div>
+                    <span class="font-bold text-gray-800 truncate">${displayName}</span>
+                </div>
+            `;
+            
+            toggleDropdown(); // 收起選單
+            loadStaticRoute(); // 執行車站載入
+        }
+
         function selectTransit(type) {
             window.selectedTransit = type;
             const pills = ['BUS', 'GMB', 'MTR', 'LRT'];
@@ -306,49 +366,59 @@
 
             const inputArea = document.getElementById('omni-input-area');
             const staticArea = document.getElementById('static-route-area');
-            const staticSelect = document.getElementById('static-route-select');
+            const listContainer = document.getElementById('custom-select-list');
+            
             document.getElementById('stop-selection-ui').classList.add('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
 
             if (['MTR', 'LRT'].includes(type)) {
-                inputArea.classList.add('hidden-step'); staticArea.classList.remove('hidden-step');
+                inputArea.classList.add('hidden-step'); 
+                staticArea.classList.remove('hidden-step');
                 
                 const placeholderKey = type === 'MTR' ? 'placeholderMTR' : 'placeholderLRT';
                 const fallbackText = type === 'MTR' ? '請選擇港鐵路線...' : '請選擇輕鐵路線...';
                 const placeholderText = typeof getTranslation === 'function' ? getTranslation(placeholderKey, fallbackText) : fallbackText;
                 
-                staticSelect.innerHTML = `<option value="" disabled selected data-i18n="${placeholderKey}">${placeholderText}</option>`;
+                // 重置 Dropdown 狀態
+                document.getElementById('custom-select-text').innerHTML = `<span class="text-gray-400">${placeholderText}</span>`;
+                document.getElementById('static-route-select').value = '';
+                listContainer.innerHTML = '';
                 
-                const mtrEmojiMap = {
-                    'TKL': '🟣 ', 'ISL': '🔵 ', 'TWL': '🔴 ', 'KTL': '🟢 ', 
-                    'TCL': '🟠 ', 'SIL': '🟡 ', 'TML': '🤎 ', 'EAL': '🩵 ', 
-                    'DRL': '🐭 ', 'AEL': '✈️ ' 
-                };
-
+                // 🌟 動態生成含有「實體顏色線」嘅下拉選項
                 Object.keys(window.STATIC_DICTIONARY).forEach(key => {
                     if (window.STATIC_DICTIONARY[key].transitType === type) {
                         let displayName = key;
-                        let colorStyle = '';
+                        let colorHex = '#9ca3af'; // 預設灰色
                         
-                        // 🌟 核心修改：輕鐵選單加入「站頭站尾」及顏色
                         if (type === 'LRT') {
                             const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
                             if (LRT_INFO_MAP[key]) {
                                 displayName = langKey === 'en' ? LRT_INFO_MAP[key].enName : LRT_INFO_MAP[key].name;
-                                colorStyle = `style="color: ${LRT_INFO_MAP[key].color}; font-weight: bold;"`;
+                                colorHex = LRT_INFO_MAP[key].color;
                             } else {
                                 displayName = window.STATIC_DICTIONARY[key].route;
                             }
                         } else if (type === 'MTR') {
                             displayName = (typeof getTranslation === 'function' ? getTranslation(window.STATIC_DICTIONARY[key].route_key, key) : key);
-                            if (mtrEmojiMap[key]) displayName = mtrEmojiMap[key] + displayName;
+                            if (MTR_COLOR_MAP[key]) colorHex = MTR_COLOR_MAP[key];
                         }
                         
-                        staticSelect.innerHTML += `<option value="${key}" ${colorStyle}>${displayName}</option>`;
+                        // 注入 Custom Dropdown
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = "flex items-center px-4 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors";
+                        itemDiv.onclick = () => selectStaticRoute(key, type, displayName, colorHex);
+                        
+                        // 👉 呢度就係你要求嘅「一條顏色線」，用 CSS background-color 完美實現！
+                        itemDiv.innerHTML = `
+                            <div class="w-2.5 h-6 rounded mr-3 shrink-0 shadow-sm border border-gray-200" style="background-color: ${colorHex};"></div>
+                            <span class="font-bold text-gray-700">${displayName}</span>
+                        `;
+                        listContainer.appendChild(itemDiv);
                     }
                 });
             } else {
-                inputArea.classList.remove('hidden-step'); staticArea.classList.add('hidden-step');
+                inputArea.classList.remove('hidden-step'); 
+                staticArea.classList.add('hidden-step');
             }
         }
 
@@ -644,30 +714,34 @@
             if (window.currentTransit === 'LRT') {
                 const lrtInfo = LRT_INFO_MAP[staticKey];
                 if (lrtInfo) {
-                    // 🌟 神級 UI 改造：將輕鐵顏色點變成「專屬路線牌」！
+                    // 🌟 自動配對顏色點
                     let customDot = document.getElementById('lrt-custom-color');
                     if (!customDot) {
                         customDot = document.createElement('div');
                         customDot.id = 'lrt-custom-color';
-                        // 加入 CSS 圓角及粗體白字，模仿輕鐵站牌
-                        customDot.className = 'color-dot selected shadow-md flex items-center justify-center text-white text-[10px] font-black tracking-tighter';
-                        customDot.style.width = '36px'; 
-                        customDot.style.borderRadius = '6px'; // 改做圓角長方形
+                        customDot.className = 'color-dot selected shadow-sm border border-gray-200'; 
                         customDot.onclick = function() { selectColor(this); };
                         document.getElementById('color-picker').appendChild(customDot);
                     }
                     customDot.style.backgroundColor = lrtInfo.color;
-                    customDot.style.borderColor = lrtInfo.color;
                     customDot.setAttribute('data-color', lrtInfo.color);
-                    customDot.innerHTML = staticKey.replace('LRT-', ''); // 將 505 寫入牌仔度！
                     selectColor(customDot);
-                } else {
-                    const orangeDot = document.querySelector('.color-dot[data-color="orange"]');
-                    if (orangeDot) selectColor(orangeDot);
                 }
             } else if (window.currentTransit === 'MTR') {
-                const yellowDot = document.querySelector('.color-dot[data-color="yellow"]');
-                if (yellowDot) selectColor(yellowDot);
+                const mtrColor = MTR_COLOR_MAP[staticKey];
+                if (mtrColor) {
+                    let customDot = document.getElementById('mtr-custom-color');
+                    if (!customDot) {
+                        customDot = document.createElement('div');
+                        customDot.id = 'mtr-custom-color';
+                        customDot.className = 'color-dot selected shadow-sm border border-gray-200';
+                        customDot.onclick = function() { selectColor(this); };
+                        document.getElementById('color-picker').appendChild(customDot);
+                    }
+                    customDot.style.backgroundColor = mtrColor;
+                    customDot.setAttribute('data-color', mtrColor);
+                    selectColor(customDot);
+                }
             }
             
             document.getElementById('stop-selection-ui').classList.remove('hidden-step');
