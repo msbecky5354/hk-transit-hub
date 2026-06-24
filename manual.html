@@ -95,6 +95,7 @@
                 </div>
             </div>
 
+            <!-- 👇 第 3 點標題預設改為「編輯與刪除」 -->
             <div class="flex gap-4 items-start">
                 <div class="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-black shadow-sm mt-0.5">3</div>
                 <div>
@@ -110,38 +111,6 @@
                     <p class="text-[13px] text-gray-500 leading-relaxed" data-i18n="manualBackupDesc">點擊底部 <strong><i class="fas fa-gear text-[#B8860B] mx-1"></i> 設定</strong>，你可以隨時將目前的路線佈局匯出成 JSON 檔案。日後更換手機或清理瀏覽器數據後，只需匯入該檔案即可瞬間復原。</p>
                 </div>
             </div>
-        </section>
-
-        <!-- 區塊 4: 常見問題 (FAQ) -->
-        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-            <h2 class="font-black text-lg text-gray-800 border-b pb-2" data-i18n="manualFaqTitle">
-                <i class="fas fa-question-circle text-[#B8860B] mr-2"></i>常見問題解答 (FAQ)
-            </h2>
-            
-            <!-- 問題 1: 港鐵方向 -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm">
-                <h4 class="font-bold text-slate-800 text-[15px] mb-2" data-i18n="manualFaq1Q">❓ 點解設定港鐵路線時，無得揀「落車站」？</h4>
-                <p class="text-[13px] text-slate-600 leading-relaxed" data-i18n="manualFaq1A">
-                    💡 因為「貼地通」的設計理念是作為你的專屬「實時電子報站機」，而不是地圖導航！畫面上顯示的終點站（例如：荃灣 / 中環），其實是指<strong>列車的行車方向</strong>。你只需選擇你身處的車站及行車方向，系統便會秒速顯示下班車時間。由於你在哪裡落車並不影響列車到站時間，所以我們省略了此步驟為你節省時間！
-                </p>
-            </div>
-
-            <!-- 問題 2: 港鐵幽靈時間 -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm mt-4">
-                <h4 class="font-bold text-slate-800 text-[15px] mb-2" data-i18n="manualFaq2Q">❓ 點解凌晨時間，港鐵會顯示要等百幾分鐘先有車？</h4>
-                <p class="text-[13px] text-slate-600 leading-relaxed" data-i18n="manualFaq2A">
-                    💡 哈哈，這絕對不是系統壞了！本程式的所有時間數據，<strong>100% 直接讀取自政府及公共交通機構的官方實時 API，並經過開發團隊多重人肉測試</strong>。在凌晨等非服務時間，官方系統有時會提前發佈明早的首班車時間。所以當你見到這類「幽靈時間」，其實代表當日已經收車啦！
-                </p>
-            </div>
-
-            <!-- 問題 3: 巴士暫無班次 -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm mt-4">
-                <h4 class="font-bold text-slate-800 text-[15px] mb-2" data-i18n="manualFaq3Q">❓ 點解正常上班時間搭巴士，有時會顯示「暫無班次」？</h4>
-                <p class="text-[13px] text-slate-600 leading-relaxed" data-i18n="manualFaq3A">
-                    💡 這同樣是官方數據的真實反映。部分巴士路線班次較疏落，如果你剛好錯過了一班，而官方系統暫時未能預測下一班車的時間，就會顯示「暫無班次」。請放心，這並非 App 故障，我們只是將官方數據庫的狀態如實呈現，建議你可以稍等幾分鐘後再刷新看看！
-                </p>
-            </div>
-            
         </section>
 
     </main>

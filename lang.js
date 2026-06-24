@@ -5,9 +5,7 @@ if (urlLang && ['tc', 'sc', 'en'].includes(urlLang)) {
     localStorage.setItem('transit_app_lang', urlLang);
 }
 
-// 讀取最終語言設定
 let currentLang = localStorage.getItem('transit_app_lang') || 'tc';
-
 
 const langDict = {
     tc: {
@@ -15,11 +13,15 @@ const langDict = {
         step3Route: "第三步：路線與上車分站", step4Save: "第四步：個人化與儲存", searchBtn: "全網智能搜尋 (Omni-Search)", searchPlaceholder: "例如: 112, 46M, E33",
         loading: "大腦聯查中...", selectStop: "請選擇上車分站...", saveBtn: "新增至儀表板", navHome: "儀表板", navAdd: "新增", navSetup: "設定",
         selectGroup: "請選擇或建立群組...", createNewGroup: "➕ 建立新群組...", newGroupPlaceholder: "輸入新群組名稱...", aliasLabel: "自訂花名 (Alias)", colorLabel: "顏色標籤",
-        groupHome: "🏠 屋企落樓", groupWork: "💼 返工轉車", arriving: "即將抵達", minutes: "分鐘", no_schedule: "暫無班次", load_failed: "連線失敗",
+        groupHome: "🏠 屋企落樓", groupWork: "💼 返工轉車", arriving: "即將抵達", departing: "即將開出", minutes: "分鐘", no_schedule: "暫無班次", load_failed: "連線失敗",
         emptyDesc: "尚未設定任何路線，立即去設定中心打造專屬你嘅出門儀表板啦！", goToSetupBtn: "+ 新增路線", 
         static_select_placeholder: "請選擇綫路 / 航線...", placeholderMTR: "請選擇港鐵路線...", placeholderLRT: "請選擇輕鐵路線...",
         transitBUS: "巴士", transitKMB: "九巴", transitLWB: "龍運", transitCTB: "城巴", transitMTR: "港鐵", transitGMB: "綠色小巴", transitGMB_new: "專線小巴", transitNLB: "嶼巴", transitLRT: "輕鐵",
         outbound: "去程", inbound: "回程", ctb_outbound: "去程", ctb_inbound: "回程",
+        
+        // 👇 新增：系統彈出視窗及按鈕翻譯
+        editRouteTitle: "✏️ 編輯路線花名", cancelBtn: "取消", confirmBtn: "確定", saveEditBtn: "儲存",
+        enterGroupName: "請輸入群組名稱！", editGroupPrompt: "請輸入新的群組名稱：",
         
         dataVaultTitle: "數據保險箱", dataVaultDesc: "安全備份你的儀表板路線及群組設定。換手機時可隨時還原。", exportBtn: "匯出備份", importBtn: "匯入還原",
         displaySettingsTitle: "顯示設定", langLabel: "介面語言 (Language)", langTc: "繁體", langSc: "简体", langEn: "ENG",
@@ -63,6 +65,8 @@ const langDict = {
         // Share App
         shareText: "極速、零廣告的香港交通 ETA 儀表板！",
         linkCopied: "🔗 連結已複製到剪貼簿！",
+        shareCopy: "複製連結",
+        shareSend: "傳送分享",
 
         // MTR Routes & Dests
         route_tcl: "東涌綫", route_tml: "屯馬綫", route_ktl: "觀塘綫", route_twl: "荃灣綫", route_isl: "港島綫", route_eal: "東鐵綫", route_sil: "南港島綫", route_tkl: "將軍澳綫", route_ael: "機場快綫", route_drl: "迪士尼綫",
@@ -74,11 +78,15 @@ const langDict = {
         step3Route: "第三步：路线与上车分站", step4Save: "第四步：个人化与储存", searchBtn: "全网智能搜寻", searchPlaceholder: "例如: 112, 46M, E33",
         loading: "大脑联查中...", selectStop: "请选择上车分站...", saveBtn: "新增至仪表板", navHome: "仪表板", navAdd: "新增", navSetup: "设定",
         selectGroup: "请选择或建立群组...", createNewGroup: "➕ 建立新群组...", newGroupPlaceholder: "输入新群组名称...", aliasLabel: "自订花名 (Alias)", colorLabel: "颜色标签",
-        groupHome: "🏠 屋企落楼", groupWork: "💼 返工转车", arriving: "即将抵达", minutes: "分钟", no_schedule: "暂无班次", load_failed: "连线失败",
+        groupHome: "🏠 屋企落楼", groupWork: "💼 返工转车", arriving: "即将抵达", departing: "即将开出", minutes: "分钟", no_schedule: "暂无班次", load_failed: "连线失败",
         emptyDesc: "尚未设定任何路线，立即去设定中心打造专属您的出门仪表板吧！", goToSetupBtn: "+ 新增路线", 
         static_select_placeholder: "请选择线路 / 航线...", placeholderMTR: "请选择港铁路线...", placeholderLRT: "请选择轻铁路线...",
         transitBUS: "巴士", transitKMB: "九巴", transitLWB: "龙运", transitCTB: "城巴", transitMTR: "港铁", transitGMB: "绿色小巴", transitGMB_new: "专线小巴", transitNLB: "屿巴", transitLRT: "轻铁",
         outbound: "去程", inbound: "回程", ctb_outbound: "去程", ctb_inbound: "回程",
+        
+        // 👇 新增：系統彈出視窗及按鈕翻译
+        editRouteTitle: "✏️ 编辑路线花名", cancelBtn: "取消", confirmBtn: "确定", saveEditBtn: "保存",
+        enterGroupName: "请输入群组名称！", editGroupPrompt: "请输入新的群组名称：",
 
         dataVaultTitle: "数据保险箱", dataVaultDesc: "安全备份你的仪表板路线及群组设定。换手机时可随时还原。", exportBtn: "导出备份", importBtn: "汇入还原",
         displaySettingsTitle: "显示设定", langLabel: "界面语言", langTc: "繁体", langSc: "简体", langEn: "ENG",
@@ -122,6 +130,8 @@ const langDict = {
         // Share App
         shareText: "极速、零广告的香港交通 ETA 仪表板！",
         linkCopied: "🔗 连结已复制到剪贴簿！",
+        shareCopy: "复制连结",
+        shareSend: "传送分享",
 
         // MTR Routes & Dests
         route_tcl: "东涌线", route_tml: "屯马线", route_ktl: "观塘线", route_twl: "荃湾线", route_isl: "港岛线", route_eal: "东铁线", route_sil: "南港岛线", route_tkl: "将军澳线", route_ael: "机场快线", route_drl: "迪士尼线",
@@ -133,11 +143,15 @@ const langDict = {
         step3Route: "Step 3: Route & Stops", step4Save: "Step 4: Save", searchBtn: "Omni-Search", searchPlaceholder: "e.g., 112, 46M, E33",
         loading: "Connecting...", selectStop: "Select a stop...", saveBtn: "Add to Dashboard", navHome: "Dashboard", navAdd: "Add", navSetup: "Setup",
         selectGroup: "Select or create group...", createNewGroup: "➕ Create new group...", newGroupPlaceholder: "Enter new group name...", aliasLabel: "Custom Alias", colorLabel: "Color Tag",
-        groupHome: "🏠 Home", groupWork: "💼 Commute", arriving: "Arriving", minutes: "mins", no_schedule: "No departures", load_failed: "Failed",
+        groupHome: "🏠 Home", groupWork: "💼 Commute", arriving: "Arriving", departing: "Departing", minutes: "mins", no_schedule: "No departures", load_failed: "Failed",
         emptyDesc: "No routes set up yet.", goToSetupBtn: "+ Add Route", 
         static_select_placeholder: "Select Route...", placeholderMTR: "Select MTR Line...", placeholderLRT: "Select Light Rail Line...",
         transitBUS: "Bus", transitKMB: "KMB", transitLWB: "LWB", transitCTB: "CTB", transitMTR: "MTR", transitGMB: "Minibus", transitGMB_new: "GMB", transitNLB: "NLB", transitLRT: "Light Rail",
         outbound: "Outbound", inbound: "Inbound", ctb_outbound: "Outbound", ctb_inbound: "Inbound",
+
+        // 👇 新增：系統彈出視窗及按鈕翻譯 (英文版)
+        editRouteTitle: "✏️ Edit Route Alias", cancelBtn: "Cancel", confirmBtn: "Confirm", saveEditBtn: "Save",
+        enterGroupName: "Please enter a group name!", editGroupPrompt: "Please enter new group name:",
 
         dataVaultTitle: "Data Vault", dataVaultDesc: "Securely backup your dashboard routes and groups. Restore them anytime.", exportBtn: "Export Backup", importBtn: "Import & Restore",
         displaySettingsTitle: "Display Settings", langLabel: "Interface Language", langTc: "繁體", langSc: "简体", langEn: "ENG",
@@ -181,6 +195,8 @@ const langDict = {
         // Share App
         shareText: "Lightning-fast, ad-free HK Transit ETA Dashboard!",
         linkCopied: "🔗 Link copied to clipboard!",
+        shareCopy: "Copy Link",
+        shareSend: "Send",
 
         // MTR Routes & Dests
         route_tcl: "Tung Chung Line", route_tml: "Tuen Ma Line", route_ktl: "Kwun Tong Line", route_twl: "Tsuen Wan Line", route_isl: "Island Line", route_eal: "East Rail Line", route_sil: "South Island Line", route_tkl: "Tseung Kwan O Line", route_ael: "Airport Express", route_drl: "Disneyland Resort Line",
@@ -207,6 +223,14 @@ function translatePage() {
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('transit_app_lang', lang);
+    
+    // 如果 URL 有 ?lang= 參數，切換語言後將其移除，保持網址乾淨
+    const url = new URL(window.location);
+    if (url.searchParams.has('lang')) {
+        url.searchParams.delete('lang');
+        window.history.replaceState({}, '', url);
+    }
+    
     if (typeof loadExistingGroups === 'function') loadExistingGroups(); 
     if (typeof renderDirectionTabs === 'function' && window.currentRouteData) { renderDirectionTabs(); renderStopDropdown(); }
     if (typeof initDashboard === 'function') initDashboard(); 

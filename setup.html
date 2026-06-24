@@ -43,11 +43,13 @@
                     <select id="group-select" onchange="checkStep1()" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
                         <option value="" disabled selected data-i18n="selectGroup"></option>
                     </select>
+                    <!-- 新增：編輯群組按鈕 -->
                     <button id="edit-group-btn" onclick="editGroupName()" class="hidden-step bg-gray-50 text-gray-400 hover:text-blue-500 hover:border-blue-300 px-4 py-2 rounded-lg border-2 border-gray-200 transition" title="修改群組名稱">
                         <i class="fas fa-pencil-alt"></i>
                     </button>
                 </div>
                 
+                <!-- 新增：創建群組時的確認區塊 -->
                 <div id="new-group-container" class="hidden-step flex gap-2">
                     <input type="text" id="new-group-input" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500" data-i18n-placeholder="newGroupPlaceholder" placeholder="輸入新群組名稱...">
                     <button onclick="confirmNewGroup()" class="bg-gray-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-gray-900 transition whitespace-nowrap shadow-sm">
@@ -265,6 +267,7 @@
                 checkStep1(); 
             }
         }
+
         function selectTransit(type) {
             window.selectedTransit = type;
             const pills = ['BUS', 'GMB', 'MTR', 'LRT'];
@@ -654,6 +657,7 @@
                 const themeClasses = { 'BUS': 'text-red-600 border-red-400', 'LWB': 'text-orange-500 border-orange-400', 'GMB': 'text-green-600 border-green-400', 'MTR': 'text-yellow-600 border-yellow-400', 'LRT': 'text-orange-600 border-orange-400' };
                 const activeClasses = `bg-white shadow-sm border ${themeClasses[transitKey] || 'text-red-600 border-red-400'}`;
                 
+                // 🌟 確保所有方向掣都有橫向 Slidebar 所需的 classes
                 btn.className = `px-4 py-2 text-sm font-bold rounded-md transition shrink-0 whitespace-nowrap snap-start ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
                 btn.textContent = label;
                 btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };

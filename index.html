@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- SEO 優化 -->
-    <meta name="description" content="貼地通 (HK Transit Hub) - 專為香港人而設的極速、零廣告交通 ETA 儀表板。自訂專屬路線，一鍵查看九巴、城巴、港鐵、小巴即時到站時間，免安裝、完全免費！">
-    <meta name="keywords" content="貼地通, 交通ETA, 香港巴士, 九巴到站時間, 城巴ETA, 港鐵時間表, 小巴ETA, 免費交通App, hk transit hub, 懶人工具駅, 免安裝">
-    <meta property="og:title" content="貼地通 | 極速零廣告交通 ETA">
-    <meta property="og:description" content="一鍵查看九巴、城巴、港鐵、小巴即時到站時間，完全免費！">
+    <!-- 🌟 SEO 搜尋引擎優化核心區 (雙語版) 🌟 -->
+    <title data-i18n="appName">貼地通 HK Transit Hub</title>
+    <meta name="description" content="貼地通 (HK Transit Hub) - 極速、零廣告交通 ETA 儀表板。一鍵查看香港巴士、港鐵、小巴實時到站時間。Real-time ETA dashboard for Hong Kong transit (KMB, CTB, MTR, Minibus). 100% Free & No Ads!">
+    <meta name="keywords" content="貼地通, HK Transit Hub, 交通ETA, 香港巴士, 九巴到站時間, 城巴ETA, 港鐵時間表, 小巴ETA, 免費交通App, hk eta, hong kong bus, mtr eta">
     
+    <!-- 🌟 社交媒體分享預覽 Open Graph (雙語版) 🌟 -->
+    <meta property="og:title" content="貼地通 HK Transit Hub | 極速零廣告交通 ETA">
+    <meta property="og:description" content="一鍵查看九巴、城巴、港鐵、小巴即時到站時間 | Real-time ETA for KMB, CTB, MTR & Minibus. 100% Free!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hk-transit-hub.vercel.app/">
     
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-3D9W2FH09X"></script>
@@ -20,7 +24,6 @@
   gtag('config', 'G-3D9W2FH09X');
 </script>
     
-    <title data-i18n="appName">貼地通</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
@@ -72,12 +75,13 @@
 
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
         <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
-            <h3 class="font-bold text-lg mb-4 text-gray-800">✏️ 編輯路線花名</h3>
+            <!-- 👇 補回 i18n 標籤 -->
+            <h3 class="font-bold text-lg mb-4 text-gray-800" data-i18n="editRouteTitle">✏️ 編輯路線花名</h3>
             <label class="block text-sm font-medium text-gray-600 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
             <input type="text" id="edit-alias-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-5 focus:border-red-500 focus:outline-none transition">
             <div class="flex justify-end space-x-3">
-                <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition">取消</button>
-                <button onclick="saveEdit()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition">儲存</button>
+                <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition" data-i18n="cancelBtn">取消</button>
+                <button onclick="saveEdit()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition" data-i18n="saveEditBtn">儲存</button>
             </div>
         </div>
     </div>
@@ -398,10 +402,9 @@
                     }
                 }
 
-                // 更新 UI 顯示
+                // 🌟 更新 UI 顯示 (完美保留三語即將開出/抵達邏輯)
                 if (display) {
-                    // 🚨 儲存 API 傳遞過來嘅總站標記 (因為 slice 會洗走 Array 嘅自訂屬性)
-                    const isTerminalStart = etas.isDeparting === true;
+                    const isTerminalStart = etas.isDeparting === true; // 從陣列屬性讀取是否總站
                     
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
@@ -412,7 +415,7 @@
                             let unit = `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
                             
                             if (min === 0) {
-                                // 🛠️ 根據底層 API seq=1 嘅鐵證，決定字眼！
+                                // 🌟 根據 isDeparting 判斷，完美支援三語
                                 const arrivingText = getTranslation('arriving', '即將抵達');
                                 const departingText = getTranslation('departing', '即將開出');
                                 timeText = isTerminalStart ? departingText : arrivingText;
@@ -434,10 +437,7 @@
                 if (transitType === 'KMB' || transitType === 'LWB' || transitType === 'CITYBUS' || transitType === 'CTB') {
                     if (json.data && Array.isArray(json.data)) {
                         etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
-                        // 🌟 API 破譯：如果 json.data 入面嘅 seq (分站序號) 係 1，百分之百係總站開出！
-                        if (json.data.some(item => String(item.seq) === '1')) {
-                            etas.isDeparting = true;
-                        }
+                        if (json.data.some(item => String(item.seq) === '1')) etas.isDeparting = true;
                     }
                 } else if (transitType === 'MTR') {
                     const urlObj = new URL(apiUrl); 
@@ -469,10 +469,7 @@
                 } else if (transitType === 'GMB') {
                     if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
                         etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
-                        // 🌟 小巴 API 破譯：route_seq 係 1 就係總站
-                        if (String(json.data[0].route_seq) === '1') {
-                            etas.isDeparting = true;
-                        }
+                        if (String(json.data[0].route_seq) === '1') etas.isDeparting = true;
                     }
                } else if (transitType === 'LRT') {
                     if (json.platform_list && Array.isArray(json.platform_list)) {
@@ -486,7 +483,6 @@
                                     if (r.route_no === targetRoute) {
                                         let timeStr = r.time_en || '';
                                         if (timeStr.toLowerCase().includes('arriving')) rawEtas.push(0);
-                                        // 🌟 輕鐵 API 破譯：直接抓取 Departing 字眼
                                         else if (timeStr.toLowerCase().includes('departing')) { rawEtas.push(0); isTerminal = true; }
                                         else if (timeStr.includes('min')) rawEtas.push(parseInt(timeStr));
                                     }
