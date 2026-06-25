@@ -9,7 +9,8 @@ function renderHeader() {
         .animate-scroll {
             display: inline-block;
             white-space: nowrap;
-            animation: scroll-left 25s linear infinite;
+            /* 🌟 核心修改：將 25s 延長至 45s，大幅減慢跑馬燈捲動速度 */
+            animation: scroll-left 45s linear infinite;
         }
         /* 左右兩側漸變遮罩，令文字出入時有漸隱效果 */
         .weather-ticker-container {
