@@ -4,6 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title data-i18n="appName">HK Transit Hub 貼地通</title>
+    
+    <script>
+        (function() {
+            if (!localStorage.getItem('hk_transit_first_visit')) {
+                // 標記為已訪問，下次唔會再彈
+                localStorage.setItem('hk_transit_first_visit', 'false');
+                
+                // 讀取網址有無 ?lang= 參數，冇就預設用 tc (繁體中文)
+                const urlParams = new URLSearchParams(window.location.search);
+                let lang = urlParams.get('lang');
+                if (!lang || !['tc', 'sc', 'en'].includes(lang)) {
+                    lang = 'tc'; 
+                }
+                
+                // 儲存語言設定，並極速跳轉去 User Manual
+                localStorage.setItem('transit_app_lang', lang);
+                window.location.replace(`manual.html?lang=${lang}`);
+            }
+        })();
+    </script>
+    
     <meta name="description" content="Zero Ads Transit Dashboard. 一鍵查看九巴、城巴、港鐵、小巴即時到站時間。">
     <meta name="keywords" content="貼地通, HK Transit Hub, 交通ETA, 香港巴士, 九巴到站時間, 城巴ETA, 港鐵時間表, 小巴ETA, 免費交通App, hk eta, hong kong bus, mtr eta">
     
@@ -123,6 +144,7 @@
                             changed = true;
                         }
                     }
+                    // 🌟 注入功能一：補回舊用家輕鐵顏色自動升級邏輯
                     const lrtColors = { '505': '#e83828', '507': '#008f4f', '610': '#5c3b21', '614': '#00b0e0', '614P': '#e87b96', '615': '#eab308', '615P': '#006098', '705': '#62b53f', '706': '#93328e', '751': '#f38a00', '761P': '#68228b' };
                     let cleanRoute = r.route ? r.route.replace('LRT-', '') : '';
                     if (cleanRoute && lrtColors[cleanRoute] && r.color !== lrtColors[cleanRoute]) {
@@ -307,7 +329,7 @@
                 const typeName = getTranslation('transitMTR', '港鐵');
                 badgeHtml = `<div class="flex flex-col items-center justify-center w-full mt-1">${bigIcon}<span class="text-[10px] text-gray-500 font-bold whitespace-nowrap">${typeName}</span></div>`;
             } else if (route.transitType === 'LRT') {
-                // 🌟 神級視覺改造：將輕鐵變成「實色官方路線牌」！
+                // 🌟 植入功能二：補回輕鐵專屬嘅實色圓角長方形路線牌
                 let lrtBgColor = route.color || '#f97316';
                 let bigIcon = `
                     <div class="h-10 w-full flex items-center justify-center mb-0.5">
@@ -417,7 +439,8 @@
                             let timeText = min;
                             let unit = `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
                             
-                            if (min === 0) {
+                            // 🌟 植入功能一：雙重渲染攔截！確保任何負數都當做 0 處理，杜絕「-1 分鐘」
+                            if (min <= 0) {
                                 const arrivingText = getTranslation('arriving', '即將抵達');
                                 const departingText = getTranslation('departing', '即將開出');
                                 timeText = isTerminalStart ? departingText : arrivingText;
@@ -470,7 +493,8 @@
                     }
                 } else if (transitType === 'GMB') {
                     if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
-                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
+                        // 🌟 植入功能一：防穿零底層保險，強制用 Math.max 將 API 傳回的負數拉回 0
+                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => Math.max(0, Number(e.diff)));
                         if (String(json.data[0].route_seq) === '1') etas.isDeparting = true;
                     }
                } else if (transitType === 'LRT') {
