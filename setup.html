@@ -108,7 +108,7 @@
 
             <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-4 mt-2">
                 <div class="flex overflow-x-auto gap-2 mb-3 pb-3 snap-x custom-scrollbar w-full cursor-grab select-none" id="direction-tabs"></div>
-                <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
+               <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-4 text-lg font-bold min-h-[60px] shadow-sm focus:outline-none focus:border-red-500 bg-white cursor-pointer">
                     <option value="" disabled selected data-i18n="selectStop"></option>
                 </select>
             </div>
@@ -783,7 +783,11 @@
                 const themeClasses = { 'BUS': 'text-red-600 border-red-400', 'LWB': 'text-orange-500 border-orange-400', 'GMB': 'text-green-600 border-green-400', 'MTR': 'text-yellow-600 border-yellow-400', 'LRT': 'text-orange-600 border-orange-400' };
                 const activeClasses = `bg-white shadow-sm border ${themeClasses[transitKey] || 'text-red-600 border-red-400'}`;
                 
-                btn.className = `px-4 py-2 text-sm font-bold rounded-md transition shrink-0 whitespace-nowrap snap-start ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
+                const widthClass = langKey === 'en' ? 'w-[175px]' : 'w-[165px]';
+btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-lg transition shrink-0 whitespace-normal break-words text-center leading-tight snap-start flex items-center justify-center ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
+                
+
+
                 btn.textContent = label;
                 btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };
                 container.appendChild(btn);
@@ -818,6 +822,13 @@
                     stopName = stop.name_key || stop.stop_id || stop.stop || `Stop ${index + 1}`; 
                 }
                 
+                // 🌟 終點站優化防呆邏輯：如果係最後一個站，自動加上標籤 
+                if (index === dirData.stops.length - 1) {
+                const terminalLabel = langKey === 'en' ? ' 🛑 (Terminal / Alight Only)' : (langKey === 'sc' ? ' 🛑 (终点站 / 只供下车)' : ' 🛑 (終點站 / 只供落車)');
+                  stopName += terminalLabel;    
+                    }  
+
+                
                 const opt = document.createElement('option');
                 opt.value = JSON.stringify(stop); 
                 opt.textContent = stopName; 
@@ -843,7 +854,12 @@
             }
             
             let stopNameLocal = select.options[select.selectedIndex].text; 
+            // 隱藏自動生成花名入面嘅終點站尾巴
+            stopNameLocal = stopNameLocal.replace(' (Terminal / Alight Only)', '').replace(' (终点站 / 只供下车)', '').replace(' (終點站 / 只供落車)', '')
+
             document.getElementById('alias-input').value = `${localizedRoute} (${stopNameLocal})`;
+          
+            
         }
 
         function checkStep2() { const select = document.getElementById('stop-select'); if(select.value) { showSetupForm(); } else { document.getElementById('setup-area').classList.add('hidden-step'); } }
@@ -873,6 +889,7 @@
             }
             
             let stopNameLocal = select.options[select.selectedIndex].text;
+stopNameLocal = stopNameLocal.replace(' (Terminal / Alight Only)', '').replace(' (终点站 / 只供下车)', '').replace(' (終點站 / 只供落車)', '');
             const defaultAlias = `${localizedRoute} (${stopNameLocal})`;
             const isCustom = (aliasInput !== defaultAlias && aliasInput !== "");
             const savedAlias = isCustom ? aliasInput : "";
