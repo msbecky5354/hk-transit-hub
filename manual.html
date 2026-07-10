@@ -28,7 +28,6 @@
             <p class="text-gray-500 font-medium mt-1" data-i18n="manualSubtitle">貼地通 (HK Transit Hub) 使用指南</p>
         </div>
 
-        <!-- 區塊 1: 設計初衷 -->
         <section class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-sm border border-gray-200 p-6 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-4 opacity-5">
                 <i class="fas fa-bullseye text-8xl text-gray-900"></i>
@@ -42,7 +41,6 @@
             </div>
         </section>
 
-        <!-- 區塊 2: 頂部列功能 -->
         <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
             <h2 class="font-black text-lg text-gray-800 border-b pb-2" data-i18n="manualHeaderTitle">
                 <i class="fas fa-window-maximize text-blue-500 mr-2"></i>頂部列功能 (Header Features)
@@ -57,10 +55,33 @@
             </div>
 
             <div class="flex gap-4 items-start">
-                <div class="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 text-gray-600 flex items-center justify-center shrink-0 shadow-sm mt-0.5"><i class="fas fa-book"></i></div>
-                <div>
-                    <h3 class="font-bold text-gray-800 text-[15px] mb-1" data-i18n="manualBookTitle">使用指南 (User Manual)</h3>
-                    <p class="text-[13px] text-gray-500 leading-relaxed" data-i18n="manualBookDesc">點擊書本圖示，即可隨時返回本頁面查閱各項功能的使用教學。</p>
+                <div class="w-8 h-8 rounded-full bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                    <i class="fas fa-mobile-screen-button"></i>
+                </div>
+                <div class="flex-1">
+                    <div id="pwa-tc" class="pwa-local-lang hidden">
+                        <h3 class="font-bold text-gray-800 text-[15px] mb-1">安裝至手機 (Install PWA)</h3>
+                        <p class="text-[13px] text-gray-500 leading-relaxed">
+                            <strong>iOS (Safari):</strong> 確保使用 Safari 瀏覽器開啟網站 -> 點擊底部「分享」圖示（正方形加向上箭嘴） -> 點選「加到主畫面」 (Add to Home Screen) -> 點擊右上角「新增」即可。<br class="mb-1">
+                            <strong>Android (Chrome):</strong> 使用 Chrome 瀏覽器開啟網站 -> 點擊右上角「三個點」選單 -> 點選「安裝應用程式」 (Install app) 或「加到主畫面」 -> 根據提示完成安裝。
+                        </p>
+                    </div>
+
+                    <div id="pwa-sc" class="pwa-local-lang hidden">
+                        <h3 class="font-bold text-gray-800 text-[15px] mb-1">安装至手机 (Install PWA)</h3>
+                        <p class="text-[13px] text-gray-500 leading-relaxed">
+                            <strong>iOS (Safari):</strong> 必须使用 Safari 浏览器打开网站 -> 点击底部“分享”图标（正方形加向上箭头） -> 向下滑动点选“添加到主屏幕” (Add to Home Screen) -> 点击右上角“添加”即可完成。<br class="mb-1">
+                            <strong>Android (Chrome):</strong> 使用 Chrome 浏览器打开网站 -> 点击右上角“三个点”菜单 -> 点选“安装应用” (Install app) 或“添加到主屏幕” -> 根据提示完成安装。
+                        </p>
+                    </div>
+
+                    <div id="pwa-en" class="pwa-local-lang hidden">
+                        <h3 class="font-bold text-gray-800 text-[15px] mb-1">Install to Home Screen (PWA)</h3>
+                        <p class="text-[13px] text-gray-500 leading-relaxed">
+                            <strong>iOS (Safari):</strong> Open this site in Safari -> Tap the "Share" icon (square with an up arrow) at the bottom toolbar -> Select "Add to Home Screen" -> Tap "Add" in the top right corner.<br class="mb-1">
+                            <strong>Android (Chrome):</strong> Open this site in Chrome -> Tap the "Three Dots" menu icon in the top right -> Select "Install app" or "Add to Home Screen" -> Follow the prompts to complete.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -73,7 +94,6 @@
             </div>
         </section>
 
-        <!-- 區塊 3: 基礎操作 -->
         <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
             <h2 class="font-black text-lg text-gray-800 border-b pb-2" data-i18n="manualBasicTitle">
                 <i class="fas fa-hand-pointer text-blue-500 mr-2"></i>基礎操作 (Basic Usage)
@@ -95,7 +115,6 @@
                 </div>
             </div>
 
-            <!-- 👇 第 3 點標題預設改為「編輯與刪除」 -->
             <div class="flex gap-4 items-start">
                 <div class="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-black shadow-sm mt-0.5">3</div>
                 <div>
@@ -118,10 +137,29 @@
     <div id="app-footer"></div>
 
     <script>
+        // 本地語言分流控制：根據當前 currentLang 顯示對應嘅 Hardcode 區塊
+        function updateLocalPwaLang() {
+            document.querySelectorAll('.pwa-local-lang').forEach(el => el.classList.add('hidden'));
+            const lang = typeof currentLang !== 'undefined' ? currentLang : 'tc';
+            const activeEl = document.getElementById(`pwa-${lang}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
-            if (typeof translatePage === "function") translatePage();
+            
+            // 劫持全域 translatePage，實現 100% 解耦
+            if (typeof translatePage === "function") {
+                const originalTranslate = translatePage;
+                window.translatePage = function() {
+                    originalTranslate();      // 執行原本 lang.js 嘅全域靜態翻譯
+                    updateLocalPwaLang();     // 執行說明的靜態三語切換
+                };
+                window.translatePage();       // 首次初始化觸發
+            } else {
+                updateLocalPwaLang();
+            }
         });
     </script>
 </body>
