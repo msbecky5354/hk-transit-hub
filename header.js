@@ -9,8 +9,7 @@ function renderHeader() {
         .animate-scroll {
             display: inline-block;
             white-space: nowrap;
-            /* 🌟 核心修改：將 25s 延長至 45s，大幅減慢跑馬燈捲動速度 */
-            animation: scroll-left 45s linear infinite;
+            animation: scroll-left 25s linear infinite;
         }
         /* 左右兩側漸變遮罩，令文字出入時有漸隱效果 */
         .weather-ticker-container {
@@ -130,7 +129,14 @@ async function fetchSpecialNews() {
     if (!container) return;
 
     try {
-        const apiUrl = `https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/special_weather.json?v=${Date.now()}`; 
+        // 替換為您剛剛複製的 File ID
+         const fileId = '1XTXpLc_nkCoArN56R8QZNkk35OGDCcHe'; 
+
+        // Google Drive 直連讀取 API
+         const apiUrl = `https://drive.google.com/uc?export=download&id=${fileId}&v=${Date.now()}`;
+
+        // 之後的 fetch(apiUrl) 維持不變          
+        //const apiUrl = `https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/special_weather.json?v=${Date.now()}`; 
         const res = await fetch(apiUrl, { method: 'GET' });
 
         if (res.ok) {
@@ -152,85 +158,23 @@ async function fetchSpecialNews() {
     }
 }
 
-// 🌟 終極大升級：動態 QR Code 視窗分享功能
+// 支援三文兩語的分享功能
 window.shareApp = function() {
-    // 讀取當前語言，並自動加入網址尾部
-    const currentLang = localStorage.getItem('transit_app_lang') || 'tc';
-    
-    // 🌟 乾淨俐落：直接用 ?lang= 參數，唔再搞跳板！
-    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-    const baseUrl = window.location.origin + basePath;
-    const shareUrl = baseUrl + '?lang=' + currentLang;
-    
     const shareTitle = typeof getTranslation === 'function' ? getTranslation('appName', '貼地通 HK Transit Hub') : '貼地通 HK Transit Hub';
     const shareDesc = typeof getTranslation === 'function' ? getTranslation('shareText', '極速、零廣告的香港交通 ETA 儀表板！') : '極速、零廣告的香港交通 ETA 儀表板！';
-    const modalTitle = typeof getTranslation === 'function' ? getTranslation('manualShareTitle', '分享應用程式') : 'Share App';
     
-    const btnCopyText = typeof getTranslation === 'function' ? getTranslation('shareCopy', '複製') : '複製';
-    const btnSendText = typeof getTranslation === 'function' ? getTranslation('shareSend', '傳送') : '傳送';
-    
-    // 生成專屬 QR Code
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
+    const shareData = {
+        title: shareTitle,
+        text: shareDesc,
+        url: window.location.origin + window.location.pathname
+    };
 
-    let modal = document.getElementById('share-modal-container');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'share-modal-container';
-        modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300';
-        document.body.appendChild(modal);
-    }
-
-    modal.innerHTML = `
-        <div class="bg-white rounded-2xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300 relative">
-            <button onclick="closeShareModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl leading-none">&times;</button>
-            
-            <h3 class="font-black text-xl text-gray-800 mb-2 flex items-center justify-center gap-2">
-                <i class="fas fa-qrcode text-[#B8860B]"></i> ${modalTitle}
-            </h3>
-            <p class="text-sm text-gray-500 mb-4 text-center">${shareDesc}</p>
-            
-            <div class="bg-gray-50 p-3 rounded-xl flex justify-center mb-5 border border-gray-200">
-                <img src="${qrUrl}" alt="QR Code" class="w-48 h-48 rounded-lg shadow-sm">
-            </div>
-            
-            <div class="flex gap-2">
-                <button onclick="copyShareLink('${shareUrl}')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm">
-                    <i class="fas fa-link"></i> ${btnCopyText}
-                </button>
-                <button onclick="nativeShare('${shareTitle}', '${shareDesc}', '${shareUrl}')" class="flex-1 bg-[#B8860B] hover:bg-yellow-600 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-md">
-                    <i class="fas fa-share"></i> ${btnSendText}
-                </button>
-            </div>
-        </div>
-    `;
-
-    requestAnimationFrame(() => {
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        modal.firstElementChild.classList.remove('scale-95');
-    });
-};
-
-window.closeShareModal = function() {
-    const modal = document.getElementById('share-modal-container');
-    if (modal) {
-        modal.classList.add('opacity-0', 'pointer-events-none');
-        modal.firstElementChild.classList.add('scale-95');
-    }
-};
-
-window.copyShareLink = function(url) {
-    navigator.clipboard.writeText(url).then(() => {
-        const alertMsg = typeof getTranslation === 'function' ? getTranslation('linkCopied', '🔗 連結已複製到剪貼簿！') : '🔗 連結已複製到剪貼簿！';
-        alert(alertMsg);
-        closeShareModal();
-    });
-};
-
-window.nativeShare = function(title, text, url) {
     if (navigator.share) {
-        navigator.share({ title: title, text: text, url: url }).catch(err => console.log('Share cancelled', err));
-        closeShareModal();
+        navigator.share(shareData).catch(err => console.log('Share cancelled', err));
     } else {
-        copyShareLink(url);
+        navigator.clipboard.writeText(shareData.url).then(() => {
+            const alertMsg = typeof getTranslation === 'function' ? getTranslation('linkCopied', '🔗 連結已複製到剪貼簿！') : '🔗 連結已複製到剪貼簿！';
+            alert(alertMsg);
+        });
     }
 };
