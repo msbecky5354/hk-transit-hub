@@ -94,7 +94,7 @@ async function fetchWeatherNews() {
     if (!container) return;
 
     try {
-        const apiUrl = `https://msbecky5354.github.io/JSON/data/data/hk_weather.json?v=${Date.now()}`; 
+        const apiUrl = `https://msbecky5354.github.io/JSON/data/hk_weather.json?v=${Date.now()}`; 
         const res = await fetch(apiUrl, { method: 'GET' });
 
         if (res.ok) {
