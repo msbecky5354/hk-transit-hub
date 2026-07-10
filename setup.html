@@ -6,11 +6,11 @@
     <title data-i18n="setupTitle"></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="lang.js?v=65"></script>
-    <script src="config.js?v=65"></script> 
+    <script src="lang.js?v=62"></script>
+    <script src="config.js?v=62"></script> 
     <script src="header.js"></script>
     <script src="footer.js"></script>
-    <script src="data-static.js?v=65"></script>
+    <script src="data-static.js?v=62"></script>
     <style>
         .hidden-step { display: none !important; }
         .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
@@ -20,39 +20,32 @@
         .transit-pill.selected-green { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #15803d !important; font-weight: bold; }
         .transit-pill.selected-yellow { background-color: #fefce8 !important; border-color: #eab308 !important; color: #a16207 !important; font-weight: bold; }
         .transit-pill.selected-orange { background-color: #fff7ed !important; border-color: #f97316 !important; color: #c2410c !important; font-weight: bold; }
-        
-        /* 🌟 美化橫向滑動條 */
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9; }
-        
-        /* 🌟 自訂 Dropdown 專用 Scrollbar */
-        #custom-select-list::-webkit-scrollbar { width: 6px; }
-        #custom-select-list::-webkit-scrollbar-track { background: transparent; }
-        #custom-select-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 antialiased min-h-screen pb-24">
     <div id="app-header"></div>
     <main class="max-w-lg mx-auto mt-6 px-4">
         
-      <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
+      <!-- Step 1: 群組選擇 -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
             <h2 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider" data-i18n="step1Group"></h2>
             <div class="flex flex-col gap-3">
                 <div class="flex gap-2">
                     <select id="group-select" onchange="checkStep1()" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white">
                         <option value="" disabled selected data-i18n="selectGroup"></option>
                     </select>
+                    <!-- 新增：編輯群組按鈕 -->
                     <button id="edit-group-btn" onclick="editGroupName()" class="hidden-step bg-gray-50 text-gray-400 hover:text-blue-500 hover:border-blue-300 px-4 py-2 rounded-lg border-2 border-gray-200 transition" title="修改群組名稱">
                         <i class="fas fa-pencil-alt"></i>
                     </button>
                 </div>
                 
+                <!-- 新增：創建群組時的確認區塊 -->
                 <div id="new-group-container" class="hidden-step flex gap-2">
                     <input type="text" id="new-group-input" class="w-full flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-red-500" data-i18n-placeholder="newGroupPlaceholder" placeholder="輸入新群組名稱...">
-                    <button onclick="confirmNewGroup()" class="bg-gray-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-gray-900 transition whitespace-nowrap shadow-sm" data-i18n="confirmBtn">確定</button>
+                    <button onclick="confirmNewGroup()" class="bg-gray-800 text-white font-bold px-5 py-3 rounded-lg hover:bg-gray-900 transition whitespace-nowrap shadow-sm">
+                        確定
+                    </button>
                 </div>
             </div>
         </div>
@@ -94,21 +87,15 @@
                 <p id="loading-text" class="text-red-500 text-sm mt-2 font-medium text-center hidden-step" data-i18n="loading"></p>
             </div>
 
-            <div id="static-route-area" class="mb-4 hidden-step relative">
-                <div id="custom-dropdown-container" class="relative">
-                    <button type="button" id="custom-select-btn" onclick="toggleDropdown()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-bold bg-white focus:border-red-500 flex justify-between items-center text-left transition shadow-sm h-[52px]">
-                        <div id="custom-select-text" class="flex items-center text-gray-400 truncate w-full pr-2" data-i18n="static_select_placeholder">請選擇綫路...</div>
-                        <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform duration-200 shrink-0" id="custom-dropdown-icon"></i>
-                    </button>
-                    <div id="custom-select-list" class="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-2xl max-h-72 overflow-y-auto hidden opacity-0 transition-opacity duration-200 py-1">
-                        </div>
-                </div>
-                <input type="hidden" id="static-route-select">
+            <div id="static-route-area" class="mb-4 hidden-step">
+                <select id="static-route-select" onchange="loadStaticRoute()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-base font-bold focus:outline-none focus:border-red-500 bg-white">
+                    <option value="" disabled selected data-i18n="static_select_placeholder"></option>
+                </select>
             </div>
 
-            <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-4 mt-2">
-                <div class="flex overflow-x-auto gap-2 mb-3 pb-3 snap-x custom-scrollbar w-full cursor-grab select-none" id="direction-tabs"></div>
-               <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-4 py-4 text-lg font-bold min-h-[60px] shadow-sm focus:outline-none focus:border-red-500 bg-white cursor-pointer">
+            <div id="stop-selection-ui" class="hidden-step border-t border-gray-100 pt-3">
+                <div class="flex gap-2 mb-3" id="direction-tabs"></div>
+                <select id="stop-select" onchange="checkStep2()" class="w-full border-2 border-gray-200 rounded-lg px-3 py-3 text-base font-medium focus:outline-none focus:border-red-500 bg-white cursor-pointer">
                     <option value="" disabled selected data-i18n="selectStop"></option>
                 </select>
             </div>
@@ -125,7 +112,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="colorLabel"></label>
-                    <div class="flex gap-3 mt-2 flex-wrap" id="color-picker">
+                    <div class="flex gap-3 mt-2" id="color-picker">
                         <div class="color-dot bg-red-500 selected" data-color="red" onclick="selectColor(this)"></div>
                         <div class="color-dot bg-blue-500" data-color="blue" onclick="selectColor(this)"></div>
                         <div class="color-dot bg-green-500" data-color="green" onclick="selectColor(this)"></div>
@@ -144,29 +131,7 @@
     <script>
         window.selectedGroup = ""; window.selectedTransit = "BUS"; window.currentTransit = "";
         window.currentRouteData = null; window.activeDirection = ''; window.selectedColor = 'red';
-        window.MTR_CSV_DICT = {}; 
-        
-        // ✨ 跟足 index.html 嘅官方顏色
-        const LRT_INFO_MAP = {
-            'LRT-505': { name: '505 三聖至兆康', color: '#e83828', enName: '505 Sam Shing to Siu Hong' },
-            'LRT-507': { name: '507 屯門碼頭至田景', color: '#008f4f', enName: '507 Tuen Mun Ferry Pier to Tin King' },
-            'LRT-610': { name: '610 屯門碼頭至元朗', color: '#5c3b21', enName: '610 Tuen Mun Ferry Pier to Yuen Long' },
-            'LRT-614': { name: '614 屯門碼頭至元朗', color: '#00b0e0', enName: '614 Tuen Mun Ferry Pier to Yuen Long' },
-            'LRT-614P': { name: '614P 屯門碼頭至兆康', color: '#e87b96', enName: '614P Tuen Mun Ferry Pier to Siu Hong' },
-            'LRT-615': { name: '615 屯門碼頭至元朗', color: '#eab308', enName: '615 Tuen Mun Ferry Pier to Yuen Long' },
-            'LRT-615P': { name: '615P 屯門碼頭至兆康', color: '#006098', enName: '615P Tuen Mun Ferry Pier to Siu Hong' },
-            'LRT-705': { name: '705 天水圍循環線', color: '#62b53f', enName: '705 Tin Shui Wai Circular' },
-            'LRT-706': { name: '706 天水圍循環線', color: '#93328e', enName: '706 Tin Shui Wai Circular' },
-            'LRT-751': { name: '751 天逸至友愛', color: '#f38a00', enName: '751 Tin Yat to Yau Oi' },
-            'LRT-761P': { name: '761P 天逸至元朗', color: '#68228b', enName: '761P Tin Yat to Yuen Long' }
-        };
-
-        // ✨ 港鐵官方顏色
-        const MTR_COLOR_MAP = {
-            'TWL': '#e2231a', 'KTL': '#00ab4e', 'ISL': '#0071ce', 'TCL': '#f68f26',
-            'TKL': '#6b208b', 'EAL': '#53b7e8', 'TML': '#5d4037', 'SIL': '#b5a800',
-            'AEL': '#00888a', 'DRL': '#f173ac'
-        };
+        window.MTR_CSV_DICT = {}; // 👇 呢個就係儲存 CSV 翻譯嘅大腦
         
         if (typeof window.CTB_DICT_CACHE === 'undefined') { window.CTB_DICT_CACHE = {}; }
 
@@ -174,56 +139,20 @@
             if (typeof renderHeader === "function") renderHeader();
             if (typeof renderFooter === "function") renderFooter();
             loadExistingGroups();
-            loadMtrCsvData(); 
-            initDragToScroll(); 
-            
-            // 🌟 點擊空白處自動收起客製化選單
-            document.addEventListener('click', function(event) {
-                const container = document.getElementById('custom-dropdown-container');
-                const list = document.getElementById('custom-select-list');
-                if (container && list && !container.contains(event.target) && !list.classList.contains('hidden')) {
-                    toggleDropdown();
-                }
-            });
+            loadMtrCsvData(); // 一開網頁即刻讀取 CSV！
         };
 
-        function initDragToScroll() {
-            const slider = document.getElementById('direction-tabs');
-            if (!slider) return;
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-            let isDragged = false; 
-
-            slider.addEventListener('mousedown', (e) => {
-                isDown = true;
-                isDragged = false;
-                slider.style.cursor = 'grabbing';
-                startX = e.pageX - slider.offsetLeft;
-                scrollLeft = slider.scrollLeft;
-            });
-            slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
-            slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; });
-            slider.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - slider.offsetLeft;
-                const walk = (x - startX) * 1.5; 
-                if (Math.abs(walk) > 5) isDragged = true; 
-                slider.scrollLeft = scrollLeft - walk;
-            });
-
-            slider.addEventListener('click', (e) => {
-                if (isDragged) { e.preventDefault(); e.stopPropagation(); }
-            }, true);
-        }
-
+       // 👇 自動讀取 CSV 並轉換為系統可讀嘅字典
         async function loadMtrCsvData() {
             try {
+                // 🚨 遵命指令：直接強制讀取 GitHub Raw 檔案，無視 Local 環境路徑問題！
                 const githubCsvUrl = 'https://raw.githubusercontent.com/msbecky5354/hk-transit-hub/main/data/mtr_lines_and_stations.csv';
                 const res = await fetch(githubCsvUrl);
                 
-                if (!res.ok) return;
+                if (!res.ok) {
+                    console.error("GitHub CSV 讀取失敗", res.status);
+                    return;
+                }
                 const text = await res.text();
                 const lines = text.split('\n');
                 if (lines.length < 2) return;
@@ -242,10 +171,13 @@
                     const tc = cols[tcIdx]?.trim();
                     const en = cols[enIdx]?.trim();
                     if (code && tc) {
+                        // 建立字典：如果搵到 Code，就儲存繁簡英翻譯
                         window.MTR_CSV_DICT[code] = { tc: tc, sc: tc, en: (en || tc) }; 
                     }
                 }
-            } catch (e) { console.warn("未能讀取 CSV，將使用 API 預設名稱。", e); }
+            } catch (e) {
+                console.warn("未能讀取 CSV，將使用 API 預設名稱。", e);
+            }
         }
 
         function loadExistingGroups() {
@@ -267,34 +199,46 @@
             const editBtn = document.getElementById('edit-group-btn');
             const step2Area = document.getElementById('step2-area');
             
+            // 隱藏第二步，直到確定了群組
             step2Area.classList.add('hidden-step'); 
 
             if (groupSelect === "NEW_GROUP") { 
                 newGroupContainer.classList.remove('hidden-step'); 
                 editBtn.classList.add('hidden-step');
-                window.selectedGroup = ""; 
+                window.selectedGroup = ""; // 還沒按確定前清空
             } else if (groupSelect) { 
                 newGroupContainer.classList.add('hidden-step'); 
                 window.selectedGroup = groupSelect;
-                step2Area.classList.remove('hidden-step'); 
+                step2Area.classList.remove('hidden-step'); // 選擇現有群組直接進入下一步
                 
+                // 判斷是否為預設群組，預設群組 (groupHome, groupWork) 不給改名
                 if(groupSelect === "groupHome" || groupSelect === "groupWork") {
                     editBtn.classList.add('hidden-step');
-                } else { editBtn.classList.remove('hidden-step'); }
+                } else {
+                    editBtn.classList.remove('hidden-step');
+                }
             }
         }
 
+        // 新增：確認新群組按鈕功能
         function confirmNewGroup() {
             const inputVal = document.getElementById('new-group-input').value.trim();
-            if (!inputVal) { alert(typeof getTranslation === 'function' ? getTranslation('enterGroupName', '請輸入群組名稱！') : '請輸入群組名稱！'); return; }
+            if (!inputVal) {
+                alert(typeof getTranslation === 'function' ? getTranslation('enterGroupName', '請輸入群組名稱！') : '請輸入群組名稱！');
+                return;
+            }
             window.selectedGroup = inputVal;
             document.getElementById('step2-area').classList.remove('hidden-step');
             
+            // UI 視覺回饋：輸入框閃一下綠色代表成功
             const inputEl = document.getElementById('new-group-input');
             inputEl.classList.add('border-green-500', 'bg-green-50');
-            setTimeout(() => { inputEl.classList.remove('border-green-500', 'bg-green-50'); }, 800);
+            setTimeout(() => {
+                inputEl.classList.remove('border-green-500', 'bg-green-50');
+            }, 800);
         }
 
+        // 新增：修改現有群組名稱功能
         function editGroupName() {
             const oldName = window.selectedGroup;
             if(!oldName || oldName === "NEW_GROUP") return;
@@ -304,51 +248,26 @@
             
             if (newName !== null && newName.trim() !== "" && newName.trim() !== oldName) {
                 const trimmedNewName = newName.trim();
+                
+                // 更新 LocalStorage 中所有屬於此群組的路線
                 let routes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
-                routes = routes.map(r => { if(r.group === oldName) r.group = trimmedNewName; return r; });
+                routes = routes.map(r => {
+                    if(r.group === oldName) {
+                        r.group = trimmedNewName;
+                    }
+                    return r;
+                });
                 localStorage.setItem('hk_transit_routes', JSON.stringify(routes));
                 
+                // 更新全域變數並重新載入下拉選單
                 window.selectedGroup = trimmedNewName;
                 loadExistingGroups();
+                
+                // 將選單設為剛改好的新名字並觸發 UI 更新
                 document.getElementById('group-select').value = trimmedNewName;
                 checkStep1(); 
             }
         }
-
-        // 🌟 打開/收起 Custom Dropdown
-        function toggleDropdown() {
-            const list = document.getElementById('custom-select-list');
-            const icon = document.getElementById('custom-dropdown-icon');
-            
-            if (list.classList.contains('hidden')) {
-                list.classList.remove('hidden');
-                setTimeout(() => list.classList.remove('opacity-0'), 10);
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                list.classList.add('opacity-0');
-                setTimeout(() => list.classList.add('hidden'), 200);
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        // 🌟 處理 Custom Dropdown 選項點擊
-        function selectStaticRoute(key, type, displayName, colorHex) {
-            // 寫入隱藏 input
-            document.getElementById('static-route-select').value = key;
-            
-            // 更新 Button 文字及保留顏色線
-            const btnText = document.getElementById('custom-select-text');
-            btnText.innerHTML = `
-                <div class="flex items-center w-full">
-                    <div class="w-2.5 h-6 rounded mr-3 shrink-0 shadow-sm border border-gray-200" style="background-color: ${colorHex};"></div>
-                    <span class="font-bold text-gray-800 truncate">${displayName}</span>
-                </div>
-            `;
-            
-            toggleDropdown(); // 收起選單
-            loadStaticRoute(); // 執行車站載入
-        }
-
         function selectTransit(type) {
             window.selectedTransit = type;
             const pills = ['BUS', 'GMB', 'MTR', 'LRT'];
@@ -366,59 +285,38 @@
 
             const inputArea = document.getElementById('omni-input-area');
             const staticArea = document.getElementById('static-route-area');
-            const listContainer = document.getElementById('custom-select-list');
-            
+            const staticSelect = document.getElementById('static-route-select');
             document.getElementById('stop-selection-ui').classList.add('hidden-step');
             document.getElementById('setup-area').classList.add('hidden-step');
 
             if (['MTR', 'LRT'].includes(type)) {
-                inputArea.classList.add('hidden-step'); 
-                staticArea.classList.remove('hidden-step');
+                inputArea.classList.add('hidden-step'); staticArea.classList.remove('hidden-step');
                 
                 const placeholderKey = type === 'MTR' ? 'placeholderMTR' : 'placeholderLRT';
                 const fallbackText = type === 'MTR' ? '請選擇港鐵路線...' : '請選擇輕鐵路線...';
                 const placeholderText = typeof getTranslation === 'function' ? getTranslation(placeholderKey, fallbackText) : fallbackText;
                 
-                // 重置 Dropdown 狀態
-                document.getElementById('custom-select-text').innerHTML = `<span class="text-gray-400">${placeholderText}</span>`;
-                document.getElementById('static-route-select').value = '';
-                listContainer.innerHTML = '';
+                staticSelect.innerHTML = `<option value="" disabled selected data-i18n="${placeholderKey}">${placeholderText}</option>`;
                 
-                // 🌟 動態生成含有「實體顏色線」嘅下拉選項
+                const mtrEmojiMap = {
+                    'TKL': '🟣 ', 'ISL': '🔵 ', 'TWL': '🔴 ', 'KTL': '🟢 ', 
+                    'TCL': '🟠 ', 'SIL': '🟡 ', 'TML': '🤎 ', 'EAL': '🩵 ', 
+                    'DRL': '🐭 ', 'AEL': '✈️ ' 
+                };
+
                 Object.keys(window.STATIC_DICTIONARY).forEach(key => {
                     if (window.STATIC_DICTIONARY[key].transitType === type) {
-                        let displayName = key;
-                        let colorHex = '#9ca3af'; // 預設灰色
+                        let displayName = (type === 'LRT') ? window.STATIC_DICTIONARY[key].route : (typeof getTranslation === 'function' ? getTranslation(window.STATIC_DICTIONARY[key].route_key, key) : key);
                         
-                        if (type === 'LRT') {
-                            const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
-                            if (LRT_INFO_MAP[key]) {
-                                displayName = langKey === 'en' ? LRT_INFO_MAP[key].enName : LRT_INFO_MAP[key].name;
-                                colorHex = LRT_INFO_MAP[key].color;
-                            } else {
-                                displayName = window.STATIC_DICTIONARY[key].route;
-                            }
-                        } else if (type === 'MTR') {
-                            displayName = (typeof getTranslation === 'function' ? getTranslation(window.STATIC_DICTIONARY[key].route_key, key) : key);
-                            if (MTR_COLOR_MAP[key]) colorHex = MTR_COLOR_MAP[key];
+                        if (type === 'MTR' && mtrEmojiMap[key]) {
+                            displayName = mtrEmojiMap[key] + displayName;
                         }
                         
-                        // 注入 Custom Dropdown
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = "flex items-center px-4 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors";
-                        itemDiv.onclick = () => selectStaticRoute(key, type, displayName, colorHex);
-                        
-                        // 👉 呢度就係你要求嘅「一條顏色線」，用 CSS background-color 完美實現！
-                        itemDiv.innerHTML = `
-                            <div class="w-2.5 h-6 rounded mr-3 shrink-0 shadow-sm border border-gray-200" style="background-color: ${colorHex};"></div>
-                            <span class="font-bold text-gray-700">${displayName}</span>
-                        `;
-                        listContainer.appendChild(itemDiv);
+                        staticSelect.innerHTML += `<option value="${key}">${displayName}</option>`;
                     }
                 });
             } else {
-                inputArea.classList.remove('hidden-step'); 
-                staticArea.classList.add('hidden-step');
+                inputArea.classList.remove('hidden-step'); staticArea.classList.add('hidden-step');
             }
         }
 
@@ -439,7 +337,11 @@
                 let directions = {};
                 let transitType = window.selectedTransit;
 
+                // ==========================================
+                // 🚌 巴士模式 (九巴, 城巴, 嶼巴, 港鐵巴士)
+                // ==========================================
                 if (window.selectedTransit === 'BUS') {
+                    // 同步發出 4 個請求 (如果有 Error 自動食咗佢，唔會阻住其他)
                     const [kmbRes, ctbRes, nlbRes, mtrBusRes] = await Promise.allSettled([
                         fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route/${routeInput}/outbound/1`).catch(()=>null),
                         fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route/CTB/${routeInput}`).catch(()=>null),
@@ -452,6 +354,7 @@
                     const nlbInfo = nlbRes.status === 'fulfilled' && nlbRes.value && nlbRes.value.ok ? await nlbRes.value.json() : null;
                     const mtrBusInfo = mtrBusRes.status === 'fulfilled' && mtrBusRes.value && mtrBusRes.value.ok ? await mtrBusRes.value.json() : null;
 
+                    // 🚨 1. 港鐵巴士 (MTR Bus) 分流邏輯
                     if (mtrBusInfo && mtrBusInfo.busStop && mtrBusInfo.busStop.length > 0) {
                         let stopsOut = [], stopsIn = [];
                         mtrBusInfo.busStop.forEach(stop => {
@@ -460,6 +363,7 @@
                                 name_obj: { tc: stop.busStopId, en: stop.busStopId },
                                 api_url: `https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule?routeName=${routeInput}`
                             };
+                            // 透過 ID 判斷: U = 回程
                             if (stop.busStopId.includes('-U')) stopsIn.push(stopObj);
                             else stopsOut.push(stopObj);
                         });
@@ -467,6 +371,7 @@
                         if (stopsIn.length > 0) directions['mtrbus_inbound'] = { dest_name: { tc: `${routeInput} 回程`, en: `${routeInput} Inbound` }, stops: stopsIn };
                     }
 
+                    // 🔴 2. 九巴 / 龍運 (KMB / LWB)
                     if (kmbInfo && kmbInfo.data) {
                         const [outRes, inRes] = await Promise.allSettled([
                             fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${routeInput}/outbound/1`),
@@ -487,6 +392,7 @@
                         }
                     }
 
+                    // 🟡 3. 城巴 (CTB) + 循環線拆分
                     if (ctbInfo && ctbInfo.data && ctbInfo.data.route === routeInput) {
                         const [outRes, inRes] = await Promise.allSettled([
                             fetch(`https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/CTB/${routeInput}/outbound`),
@@ -524,6 +430,7 @@
                         }
                     }
 
+                    // 🔵 4. 嶼巴 (NLB)
                     if (nlbInfo && nlbInfo.routes) {
                         const matchedRoutes = nlbInfo.routes.filter(r => r.routeNo.toUpperCase() === routeInput);
                         const getDest = (name) => name && name.includes('>') ? name.split('>')[1].trim() : name;
@@ -551,6 +458,9 @@
                     }
                 }
 
+                // ==========================================
+                // 🟢 小巴模式 (GMB) - 防斷線迴圈 + 智能折返點搜尋
+                // ==========================================
                 if (window.selectedTransit === 'GMB') {
                     const regions = ['NT', 'KLN', 'HKI'];
                     for (const region of regions) {
@@ -560,65 +470,63 @@
                             const info = await rRes.json();
                             
                             if (info.data && info.data.length > 0) {
-                                for (let i = 0; i < info.data.length; i++) {
-                                    const routeInfo = info.data[i];
-                                    const routeId = routeInfo.route_id;
-                                    
-                                    const [outRes, inRes] = await Promise.allSettled([
-                                        fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
-                                        fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
-                                    ]);
-                                    
-                                    const outData = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
-                                    const inData = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
+                                const routeInfo = info.data[0];
+                                const routeId = routeInfo.route_id;
+                                
+                                const [outRes, inRes] = await Promise.allSettled([
+                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/1`),
+                                    fetch(`https://data.etagmb.gov.hk/route-stop/${routeId}/2`)
+                                ]);
+                                
+                                const outData = outRes.status === 'fulfilled' && outRes.value.ok ? await outRes.value.json() : null;
+                                const inData = inRes.status === 'fulfilled' && inRes.value.ok ? await inRes.value.json() : null;
 
-                                    let cOut = outData && outData.data && outData.data.route_stops ? outData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
-                                    let cIn = inData && inData.data && inData.data.route_stops ? inData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+                                let cOut = outData && outData.data && outData.data.route_stops ? outData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
+                                let cIn = inData && inData.data && inData.data.route_stops ? inData.data.route_stops.map(s => ({ stop_id: s.stop_id.toString(), name_obj: { tc: s.name_tc, en: s.name_en }, api_url: `https://data.etagmb.gov.hk/eta/route-stop/${routeId}/${s.stop_id}` })) : [];
 
-                                    if (cOut.length === 0 && cIn.length === 0) continue;
+                                if (cOut.length === 0 && cIn.length === 0) continue;
 
-                                    let offDestTc = routeInfo.directions[0]?.dest_tc || "";
-                                    let offDestEn = routeInfo.directions[0]?.dest_en || "";
-                                    let offOrigTc = routeInfo.directions[0]?.orig_tc || "";
-                                    let offOrigEn = routeInfo.directions[0]?.orig_en || "";
+                                let offDestTc = routeInfo.directions[0]?.dest_tc || "";
+                                let offDestEn = routeInfo.directions[0]?.dest_en || "";
+                                let offOrigTc = routeInfo.directions[0]?.orig_tc || "";
+                                let offOrigEn = routeInfo.directions[0]?.orig_en || "";
 
-                                    const cleanDestName = (name) => name ? name.replace(/\s*\(.*?\)/g, '').replace(/站$/g, '').replace(/總站$/g, '').replace(/交匯處$/g, '').trim() : "";
+                                const cleanDestName = (name) => name ? name.replace(/\s*\(.*?\)/g, '').replace(/站$/g, '').replace(/總站$/g, '').replace(/交匯處$/g, '').trim() : "";
 
-                                    const splitGmbCircularRoute = (stopsArray) => {
-                                        let splitIndex = Math.floor(stopsArray.length / 2);
-                                        let realDestName = "";
-                                        if (offDestTc) {
-                                            realDestName = offDestTc.replace(/\s*\(.*?\)/g, '').trim();
-                                            const keyword = cleanDestName(offDestTc);
-                                            if (keyword.length >= 2) {
-                                                for (let k = 1; k < stopsArray.length - 1; k++) {
-                                                    if (stopsArray[k].name_obj.tc.includes(keyword)) splitIndex = k;
-                                                }
+                                const splitGmbCircularRoute = (stopsArray) => {
+                                    let splitIndex = Math.floor(stopsArray.length / 2);
+                                    let realDestName = "";
+                                    if (offDestTc) {
+                                        realDestName = offDestTc.replace(/\s*\(.*?\)/g, '').trim();
+                                        const keyword = cleanDestName(offDestTc);
+                                        if (keyword.length >= 2) {
+                                            for (let i = 1; i < stopsArray.length - 1; i++) {
+                                                if (stopsArray[i].name_obj.tc.includes(keyword)) splitIndex = i;
                                             }
                                         }
-                                        const turnaroundStop = stopsArray[splitIndex].name_obj;
-                                        const finalStop = stopsArray[stopsArray.length - 1].name_obj;
-                                        const outDest = realDestName ? { tc: realDestName, en: turnaroundStop.en } : { tc: turnaroundStop.tc, en: turnaroundStop.en };
-                                        return {
-                                            outbound: { dest_name: outDest, stops: stopsArray.slice(0, splitIndex + 1) },
-                                            inbound: { dest_name: { tc: finalStop.tc, en: finalStop.en }, stops: stopsArray.slice(splitIndex) }
-                                        };
-                                    };
-
-                                    const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
-                                    const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
-
-                                    const outKey = `gmb_${region.toLowerCase()}_${i}_out`;
-                                    const inKey = `gmb_${region.toLowerCase()}_${i}_in`;
-
-                                    if (isOutCirc) {
-                                        const res = splitGmbCircularRoute(cOut); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
-                                    } else if (isInCirc && cOut.length === 0) {
-                                        const res = splitGmbCircularRoute(cIn); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
-                                    } else {
-                                        if (cOut.length > 0) directions[outKey] = { dest_name: { tc: offDestTc || cOut[cOut.length - 1].name_obj.tc, en: offDestEn || cOut[cOut.length - 1].name_obj.en }, stops: cOut };
-                                        if (cIn.length > 0) directions[inKey] = { dest_name: { tc: offOrigTc || cIn[cIn.length - 1].name_obj.tc, en: offOrigEn || cIn[cIn.length - 1].name_obj.en }, stops: cIn };
                                     }
+                                    const turnaroundStop = stopsArray[splitIndex].name_obj;
+                                    const finalStop = stopsArray[stopsArray.length - 1].name_obj;
+                                    const outDest = realDestName ? { tc: realDestName, en: turnaroundStop.en } : { tc: turnaroundStop.tc, en: turnaroundStop.en };
+                                    return {
+                                        outbound: { dest_name: outDest, stops: stopsArray.slice(0, splitIndex + 1) },
+                                        inbound: { dest_name: { tc: finalStop.tc, en: finalStop.en }, stops: stopsArray.slice(splitIndex) }
+                                    };
+                                };
+
+                                const isOutCirc = cOut.length > 2 && cOut[0].name_obj.tc === cOut[cOut.length - 1].name_obj.tc;
+                                const isInCirc = cIn.length > 2 && cIn[0].name_obj.tc === cIn[cIn.length - 1].name_obj.tc;
+
+                                const outKey = `gmb_${region.toLowerCase()}_out`;
+                                const inKey = `gmb_${region.toLowerCase()}_in`;
+
+                                if (isOutCirc) {
+                                    const res = splitGmbCircularRoute(cOut); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                } else if (isInCirc && cOut.length === 0) {
+                                    const res = splitGmbCircularRoute(cIn); directions[outKey] = res.outbound; directions[inKey] = res.inbound;
+                                } else {
+                                    if (cOut.length > 0) directions[outKey] = { dest_name: { tc: offDestTc || cOut[cOut.length - 1].name_obj.tc, en: offDestEn || cOut[cOut.length - 1].name_obj.en }, stops: cOut };
+                                    if (cIn.length > 0) directions[inKey] = { dest_name: { tc: offOrigTc || cIn[cIn.length - 1].name_obj.tc, en: offOrigEn || cIn[cIn.length - 1].name_obj.en }, stops: cIn };
                                 }
                             }
                         } catch (regionErr) {
@@ -627,23 +535,29 @@
                     }
                 }
 
+                // ==========================================
+                // 🏁 最終處理 (已修復九巴及城巴字典查閱功能)
+                // ==========================================
                 if (Object.keys(directions).length === 0) throw new Error(`找不到路線 ${routeInput}。`);
 
+                // 準備字典 Cache
                 if (typeof window.CTB_DICT_CACHE === 'undefined') window.CTB_DICT_CACHE = {};
-                if (typeof window.KMB_DICT_CACHE === 'undefined') window.KMB_DICT_CACHE = {}; 
+                if (typeof window.KMB_DICT_CACHE === 'undefined') window.KMB_DICT_CACHE = {}; // 👈 新增九巴字典
 
                 let missingCtbStops = new Set();
                 let missingKmbStops = new Set();
 
+                // 收集所有需要查字典嘅站點 ID
                 Object.values(directions).forEach(dir => {
                     dir.stops.forEach(s => {
                         if (s.name_obj.tc.includes('政府數據載入中')) {
                             if (s.api_url.includes('citybus')) missingCtbStops.add(s.stop_id);
-                            if (s.api_url.includes('kmb')) missingKmbStops.add(s.stop_id); 
+                            if (s.api_url.includes('kmb')) missingKmbStops.add(s.stop_id); // 👈 認出九巴 API Link
                         }
                     });
                 });
 
+                // 🟡 處理城巴字典
                 if (missingCtbStops.size > 0) {
                     const stopsToFetch = Array.from(missingCtbStops).filter(id => !window.CTB_DICT_CACHE[id]);
                     await Promise.all(stopsToFetch.map(async id => {
@@ -661,6 +575,7 @@
                     });
                 }
 
+                // 🔴 處理九巴字典 (全新加入)
                 if (missingKmbStops.size > 0) {
                     const stopsToFetch = Array.from(missingKmbStops).filter(id => !window.KMB_DICT_CACHE[id]);
                     await Promise.all(stopsToFetch.map(async id => {
@@ -678,6 +593,7 @@
                     });
                 }
 
+                // 🚇 補完 MTR Bus 中文名
                 if (window.MTR_BUS_DICT) {
                     Object.keys(directions).forEach(dirKey => {
                         if (dirKey.includes('mtrbus')) {
@@ -689,7 +605,9 @@
                     });
                 }
 
+                // 設定最終資料並顯示 UI
                 window.currentRouteData = { route: routeInput, transitType: transitType, directions: directions };
+                // ... (下面維持不變 renderDirectionTabs 等等)
                 window.currentTransit = transitType;
                 window.activeDirection = Object.keys(directions)[0];
 
@@ -712,36 +630,11 @@
             window.activeDirection = Object.keys(window.currentRouteData.directions)[0];
             
             if (window.currentTransit === 'LRT') {
-                const lrtInfo = LRT_INFO_MAP[staticKey];
-                if (lrtInfo) {
-                    // 🌟 自動配對顏色點
-                    let customDot = document.getElementById('lrt-custom-color');
-                    if (!customDot) {
-                        customDot = document.createElement('div');
-                        customDot.id = 'lrt-custom-color';
-                        customDot.className = 'color-dot selected shadow-sm border border-gray-200'; 
-                        customDot.onclick = function() { selectColor(this); };
-                        document.getElementById('color-picker').appendChild(customDot);
-                    }
-                    customDot.style.backgroundColor = lrtInfo.color;
-                    customDot.setAttribute('data-color', lrtInfo.color);
-                    selectColor(customDot);
-                }
+                const orangeDot = document.querySelector('.color-dot[data-color="orange"]');
+                if (orangeDot) selectColor(orangeDot);
             } else if (window.currentTransit === 'MTR') {
-                const mtrColor = MTR_COLOR_MAP[staticKey];
-                if (mtrColor) {
-                    let customDot = document.getElementById('mtr-custom-color');
-                    if (!customDot) {
-                        customDot = document.createElement('div');
-                        customDot.id = 'mtr-custom-color';
-                        customDot.className = 'color-dot selected shadow-sm border border-gray-200';
-                        customDot.onclick = function() { selectColor(this); };
-                        document.getElementById('color-picker').appendChild(customDot);
-                    }
-                    customDot.style.backgroundColor = mtrColor;
-                    customDot.setAttribute('data-color', mtrColor);
-                    selectColor(customDot);
-                }
+                const yellowDot = document.querySelector('.color-dot[data-color="yellow"]');
+                if (yellowDot) selectColor(yellowDot);
             }
             
             document.getElementById('stop-selection-ui').classList.remove('hidden-step');
@@ -759,6 +652,7 @@
                 let destText = '';
                 const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
                 
+                // 👇 方向標籤優先使用 CSV 翻譯！
                 if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[dir.dest_key]) {
                     destText = window.MTR_CSV_DICT[dir.dest_key][langKey];
                 } else if (dir.dest_name && typeof dir.dest_name === 'object') { 
@@ -770,8 +664,7 @@
                 }
                 
                 let label = destText;
-                
-                if (destText !== "未知方向" && !destText.startsWith('往 ') && !destText.toLowerCase().startsWith('to ')) { 
+                if (!['MTR', 'LRT'].includes(window.currentTransit) && window.currentTransit !== 'GMB' && destText !== "未知方向") { 
                     label = `${langKey === 'en' ? 'To ' : '往 '}${destText}`; 
                 }
                 
@@ -783,11 +676,7 @@
                 const themeClasses = { 'BUS': 'text-red-600 border-red-400', 'LWB': 'text-orange-500 border-orange-400', 'GMB': 'text-green-600 border-green-400', 'MTR': 'text-yellow-600 border-yellow-400', 'LRT': 'text-orange-600 border-orange-400' };
                 const activeClasses = `bg-white shadow-sm border ${themeClasses[transitKey] || 'text-red-600 border-red-400'}`;
                 
-                const widthClass = langKey === 'en' ? 'w-[175px]' : 'w-[165px]';
-btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-lg transition shrink-0 whitespace-normal break-words text-center leading-tight snap-start flex items-center justify-center ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
-                
-
-
+                btn.className = `flex-1 py-2 text-sm font-bold rounded-md transition ${window.activeDirection === key ? activeClasses : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200 border border-transparent'}`;
                 btn.textContent = label;
                 btn.onclick = () => { window.activeDirection = key; renderDirectionTabs(); renderStopDropdown(); };
                 container.appendChild(btn);
@@ -812,6 +701,7 @@ btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-
                 let stopName = '';
                 const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
 
+                // 👇 站點下拉選單優先使用 CSV 翻譯！
                 if (['MTR', 'LRT'].includes(window.currentTransit) && window.MTR_CSV_DICT && window.MTR_CSV_DICT[stop.stop_id]) {
                     stopName = window.MTR_CSV_DICT[stop.stop_id][langKey];
                 } else if (stop.name_obj && stop.name_obj[langKey]) { 
@@ -821,13 +711,6 @@ btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-
                 } else { 
                     stopName = stop.name_key || stop.stop_id || stop.stop || `Stop ${index + 1}`; 
                 }
-                
-                // 🌟 終點站優化防呆邏輯：如果係最後一個站，自動加上標籤 
-                if (index === dirData.stops.length - 1) {
-                const terminalLabel = langKey === 'en' ? ' 🛑 (Terminal / Alight Only)' : (langKey === 'sc' ? ' 🛑 (终点站 / 只供下车)' : ' 🛑 (終點站 / 只供落車)');
-                  stopName += terminalLabel;    
-                    }  
-
                 
                 const opt = document.createElement('option');
                 opt.value = JSON.stringify(stop); 
@@ -842,33 +725,14 @@ btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-
             const select = document.getElementById('stop-select');
             
             let localizedRoute = window.currentRouteData.route_key ? (typeof getTranslation === 'function' ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route) : window.currentRouteData.route;
-            
-            if (window.currentRouteData.transitType === 'LRT') {
-                const lrtKey = `LRT-${window.currentRouteData.route}`;
-                const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
-                if (LRT_INFO_MAP[lrtKey]) {
-                    localizedRoute = langKey === 'en' ? LRT_INFO_MAP[lrtKey].enName : LRT_INFO_MAP[lrtKey].name;
-                } else {
-                    localizedRoute = window.currentRouteData.route;
-                }
-            }
+            if (window.currentRouteData.transitType === 'LRT') localizedRoute = window.currentRouteData.route;
             
             let stopNameLocal = select.options[select.selectedIndex].text; 
-            // 隱藏自動生成花名入面嘅終點站尾巴
-            stopNameLocal = stopNameLocal.replace(' (Terminal / Alight Only)', '').replace(' (终点站 / 只供下车)', '').replace(' (終點站 / 只供落車)', '')
-
             document.getElementById('alias-input').value = `${localizedRoute} (${stopNameLocal})`;
-          
-            
         }
 
         function checkStep2() { const select = document.getElementById('stop-select'); if(select.value) { showSetupForm(); } else { document.getElementById('setup-area').classList.add('hidden-step'); } }
-        
-        function selectColor(element) { 
-            document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected')); 
-            element.classList.add('selected'); 
-            window.selectedColor = element.getAttribute('data-color'); 
-        }
+        function selectColor(element) { document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected')); element.classList.add('selected'); window.selectedColor = element.getAttribute('data-color'); }
         
         function saveToDashboard() {
             const select = document.getElementById('stop-select');
@@ -877,43 +741,30 @@ btn.className = `${widthClass} min-h-[88px] px-2 py-2 text-sm font-bold rounded-
             const colorMap = { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#10b981', 'purple': '#8b5cf6', 'orange': '#f97316', 'yellow': '#eab308' };
             
             let localizedRoute = window.currentRouteData.route_key ? (typeof getTranslation === 'function' ? getTranslation(window.currentRouteData.route_key, window.currentRouteData.route) : window.currentRouteData.route) : window.currentRouteData.route;
-            
-            if (window.currentRouteData.transitType === 'LRT') {
-                const lrtKey = `LRT-${window.currentRouteData.route}`;
-                const langKey = typeof currentLang !== 'undefined' ? currentLang : 'tc';
-                if (LRT_INFO_MAP[lrtKey]) {
-                    localizedRoute = langKey === 'en' ? LRT_INFO_MAP[lrtKey].enName : LRT_INFO_MAP[lrtKey].name;
-                } else {
-                    localizedRoute = window.currentRouteData.route;
-                }
-            }
+            if (window.currentRouteData.transitType === 'LRT') localizedRoute = window.currentRouteData.route;
             
             let stopNameLocal = select.options[select.selectedIndex].text;
-stopNameLocal = stopNameLocal.replace(' (Terminal / Alight Only)', '').replace(' (终点站 / 只供下车)', '').replace(' (終點站 / 只供落車)', '');
             const defaultAlias = `${localizedRoute} (${stopNameLocal})`;
             const isCustom = (aliasInput !== defaultAlias && aliasInput !== "");
             const savedAlias = isCustom ? aliasInput : "";
 
             let finalTransitType = window.currentTransit.toUpperCase();
-            
             if (finalTransitType === 'BUS') {
                 const destName = window.currentRouteData.directions[window.activeDirection].dest_name.tc || "";
                 if (destName.includes('九巴')) finalTransitType = 'KMB';
                 else if (destName.includes('龍運')) finalTransitType = 'LWB';
                 else if (destName.includes('城巴')) finalTransitType = 'CTB';
                 else if (destName.includes('嶼巴')) finalTransitType = 'NLB';
-                else if (window.activeDirection && window.activeDirection.includes('mtrbus')) finalTransitType = 'MTR_BUS';
                 else if (destName.includes('港鐵')) finalTransitType = 'MTR'; 
             }
 
-            const finalColor = window.selectedColor.startsWith('#') ? window.selectedColor : (colorMap[window.selectedColor] || '#ef4444');
-
+            
             const newRouteConfig = {
                 id: `item_${Date.now()}`, group: window.selectedGroup, transitType: finalTransitType, route: window.currentRouteData.route,
                 route_key: window.currentRouteData.route_key || null, stop_id: stopData.stop_id,
                 dest_key: window.currentRouteData.directions[window.activeDirection].dest_key || null, dest_name: window.currentRouteData.directions[window.activeDirection].dest_name || null,
                 stop_key: stopData.name_key || null, stop_name: stopData.name_obj || null, alias: savedAlias, isCustomAlias: isCustom,
-                color: finalColor, apiUrl: stopData.api_url, time: 'ALL_DAY'
+                color: colorMap[window.selectedColor] || '#ef4444', apiUrl: stopData.api_url, time: 'ALL_DAY'
             };
             
             let dashboardRoutes = JSON.parse(localStorage.getItem('hk_transit_routes') || '[]');
