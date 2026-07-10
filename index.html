@@ -3,47 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title data-i18n="appName">HK Transit Hub 貼地通</title>
     
-    <script>
-        (function() {
-            if (!localStorage.getItem('hk_transit_first_visit')) {
-                // 標記為已訪問，下次唔會再彈
-                localStorage.setItem('hk_transit_first_visit', 'false');
-                
-                // 讀取網址有無 ?lang= 參數，冇就預設用 tc (繁體中文)
-                const urlParams = new URLSearchParams(window.location.search);
-                let lang = urlParams.get('lang');
-                if (!lang || !['tc', 'sc', 'en'].includes(lang)) {
-                    lang = 'tc'; 
-                }
-                
-                // 儲存語言設定，並極速跳轉去 User Manual
-                localStorage.setItem('transit_app_lang', lang);
-                window.location.replace(`manual.html?lang=${lang}`);
-            }
-        })();
-    </script>
-    
-    <meta name="description" content="Zero Ads Transit Dashboard. 一鍵查看九巴、城巴、港鐵、小巴即時到站時間。">
-    <meta name="keywords" content="貼地通, HK Transit Hub, 交通ETA, 香港巴士, 九巴到站時間, 城巴ETA, 港鐵時間表, 小巴ETA, 免費交通App, hk eta, hong kong bus, mtr eta">
-    
-    <meta property="og:title" content="HK Transit Hub 貼地通 | Real-time ETA">
-    <meta property="og:description" content="Zero Ads Transit Dashboard. 一鍵查看九巴、城巴、港鐵、小巴即時到站時間。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://hk-transit-hub.vercel.app/">
-    
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3D9W2FH09X"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-3D9W2FH09X');
-    </script>
-    
+    <title data-i18n="appName">貼地通</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     
     <script src="lang.js?v=31"></script>
@@ -57,6 +21,7 @@
         .swipe-content { position: relative; z-index: 10; background: white; transition: transform 0.2s ease-out; touch-action: pan-y; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background-color: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
         
+        /* 🛠️ CSS 封印，配合補丁使用 */
         .drag-handle, .group-title-handle { 
             cursor: grab; 
             touch-action: none !important; 
@@ -64,7 +29,9 @@
             user-select: none; 
             -webkit-touch-callout: none !important; 
         }
+        /* 確保手指點擊時，事件落在把手 div，而不是 icon 身上 */
         .drag-handle i, .group-title-handle i { pointer-events: none; }
+        
         .drag-handle:active, .group-title-handle:active { cursor: grabbing; }
         .group-title-handle { padding: 0.5rem 0; }
         .sortable-ghost { opacity: 0.4; background-color: #f3f4f6; border: 2px dashed #cbd5e1; }
@@ -89,12 +56,12 @@
 
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center hidden-step">
         <div class="bg-white rounded-xl p-6 w-11/12 max-w-sm shadow-2xl">
-            <h3 class="font-bold text-lg mb-4 text-gray-800" data-i18n="editRouteTitle">✏️ 編輯路線花名</h3>
+            <h3 class="font-bold text-lg mb-4 text-gray-800">✏️ 編輯路線花名</h3>
             <label class="block text-sm font-medium text-gray-600 mb-1" data-i18n="aliasLabel">自訂花名 (Alias)</label>
             <input type="text" id="edit-alias-input" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-5 focus:border-red-500 focus:outline-none transition">
             <div class="flex justify-end space-x-3">
-                <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition" data-i18n="cancelBtn">取消</button>
-                <button onclick="saveEdit()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition" data-i18n="saveEditBtn">儲存</button>
+                <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition">取消</button>
+                <button onclick="saveEdit()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition">儲存</button>
             </div>
         </div>
     </div>
@@ -130,25 +97,15 @@
                     if (r.apiUrl.includes('etabus.gov.hk')) { r.transitType = 'KMB'; changed = true; }
                     else if (r.apiUrl.includes('citybus-nwfb')) { r.transitType = 'CTB'; changed = true; }
                     else if (r.apiUrl.includes('nlb')) { r.transitType = 'NLB'; changed = true; }
-                    else if (r.apiUrl.includes('/mtr/bus/getSchedule')) { r.transitType = 'MTR_BUS'; changed = true; } 
                 }
                 if (r.transitType === 'KMB' && r.apiUrl && r.apiUrl.match(/\/kmb\/eta\/[A-Z0-9-]+\/[A-Z0-9-]+\/2$/i)) {
                     r.apiUrl = r.apiUrl.replace(/\/2$/, '/1');
                     changed = true;
                 }
 
-                if (r.transitType === 'LRT') {
-                    if (!r.route || r.route.trim() === '') {
-                        if (r.route_key && r.route_key.startsWith('route_lrt_')) {
-                            r.route = r.route_key.replace('route_lrt_', '').toUpperCase();
-                            changed = true;
-                        }
-                    }
-                    // 🌟 注入功能一：補回舊用家輕鐵顏色自動升級邏輯
-                    const lrtColors = { '505': '#e83828', '507': '#008f4f', '610': '#5c3b21', '614': '#00b0e0', '614P': '#e87b96', '615': '#eab308', '615P': '#006098', '705': '#62b53f', '706': '#93328e', '751': '#f38a00', '761P': '#68228b' };
-                    let cleanRoute = r.route ? r.route.replace('LRT-', '') : '';
-                    if (cleanRoute && lrtColors[cleanRoute] && r.color !== lrtColors[cleanRoute]) {
-                        r.color = lrtColors[cleanRoute];
+                if (r.transitType === 'LRT' && (!r.route || r.route.trim() === '')) {
+                    if (r.route_key && r.route_key.startsWith('route_lrt_')) {
+                        r.route = r.route_key.replace('route_lrt_', '').toUpperCase();
                         changed = true;
                     }
                 }
@@ -188,7 +145,6 @@
             }
         };
 
-        // 保留原裝圖片
         function getTransitDisplayHtml(transitType) {
            const safeType = transitType ? transitType.toUpperCase() : 'BUS';
             const langKeyMap = { 'KMB': 'transitKMB', 'LWB': 'transitLWB', 'CITYBUS': 'transitCTB', 'CTB': 'transitCTB', 'MTR': 'transitMTR', 'LRT': 'transitLRT', 'NLB': 'transitNLB', 'GMB': 'transitGMB_new', 'BUS': 'transitBUS', 'MTR_BUS': 'transitMTR' };
@@ -208,6 +164,9 @@
                 iconHtml = `<img src="MINIBUS.png" class="inline-block h-4 mr-1 object-contain -mt-0.5" style="mix-blend-mode: multiply;">`;
             } else if (safeType === 'MTR') {
                 iconHtml = `<img src="MTR.png" class="inline-block h-4 mr-0.5 object-contain transform scale-125 -mt-0.5" style="mix-blend-mode: multiply;">`;
+            } else if (safeType === 'LRT') {
+                textColor = 'text-orange-500';
+                iconHtml = `<i class="fas fa-train-tram mr-1 text-[13px]"></i>`;
             } else {
                 iconHtml = `<i class="fas fa-route mr-1 text-[13px]"></i>`;
             }
@@ -252,12 +211,13 @@
                 routes.forEach(route => { listDiv.appendChild(createRouteCard(route)); });
                 groupDiv.appendChild(listDiv); container.appendChild(groupDiv);
 
+                // 🛠️ 配合補丁：關閉 forceFallback，畀返標準 Drag API 做嘢
                 const listSortable = new Sortable(listDiv, { 
                     handle: '.drag-handle', 
                     animation: 150, 
                     ghostClass: 'sortable-ghost',
-                    forceFallback: false, 
-                    delay: 100,           
+                    forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
+                    delay: 100,           // <-- 畀少少 delay 等系統準備
                     delayOnTouchOnly: true,
                     onEnd: function () { updateSorting(); } 
                 });
@@ -269,7 +229,7 @@
                 handle: '.group-title-handle', 
                 animation: 150, 
                 ghostClass: 'sortable-ghost',
-                forceFallback: false, 
+                forceFallback: false, // <-- 關閉，交畀 DragDropTouch 處理
                 delay: 100,
                 delayOnTouchOnly: true,
                 onEnd: function () { updateGroupSorting(); } 
@@ -297,12 +257,8 @@
             if (cleanDestName.includes('往 ')) cleanDestName = cleanDestName.split('往 ').pop().trim();
             else if (cleanDestName.toLowerCase().includes(' to ')) cleanDestName = cleanDestName.split(/ to /i).pop().trim();
             
-            const regexClean = /\s*[\(（][^\)）]*[\)）]/g;
-            const baseStop = stopName.replace(regexClean, '').trim();
-            const baseDest = cleanDestName.replace(regexClean, '').trim();
-            
             let directionStr = "";
-            if (cleanDestName && baseStop !== baseDest && !baseDest.includes(baseStop)) {
+            if (cleanDestName && stopName !== cleanDestName) {
                 const toWord = currentLang === 'en' ? ' To ' : ' 往 '; 
                 directionStr = `${stopName}${toWord}${cleanDestName}`;
             } else {
@@ -327,17 +283,6 @@
             if (route.transitType === 'MTR') {
                 let bigIcon = '<div class="h-10 flex items-center justify-center mb-0.5"><img src="MTR.png" alt="MTR" class="h-9 object-contain" style="transform: scale(1.6); mix-blend-mode: multiply;"></div>'; 
                 const typeName = getTranslation('transitMTR', '港鐵');
-                badgeHtml = `<div class="flex flex-col items-center justify-center w-full mt-1">${bigIcon}<span class="text-[10px] text-gray-500 font-bold whitespace-nowrap">${typeName}</span></div>`;
-            } else if (route.transitType === 'LRT') {
-                // 🌟 植入功能二：補回輕鐵專屬嘅實色圓角長方形路線牌
-                let lrtBgColor = route.color || '#f97316';
-                let bigIcon = `
-                    <div class="h-10 w-full flex items-center justify-center mb-0.5">
-                        <div class="text-white font-black text-lg rounded-[6px] flex items-center justify-center shadow-sm tracking-tighter" style="background-color: ${lrtBgColor}; width: 44px; height: 26px;">
-                            ${shortRouteName}
-                        </div>
-                    </div>`; 
-                const typeName = getTranslation('transitLRT', '輕鐵');
                 badgeHtml = `<div class="flex flex-col items-center justify-center w-full mt-1">${bigIcon}<span class="text-[10px] text-gray-500 font-bold whitespace-nowrap">${typeName}</span></div>`;
             } else { 
                 badgeHtml = `<div class="text-[10px] mb-1 w-full flex items-center justify-center whitespace-nowrap">${transitDisplay}</div><span class="text-base font-black text-gray-800 truncate max-w-full leading-tight">${shortRouteName}</span>`; 
@@ -395,6 +340,7 @@
                 const display = document.getElementById(`eta-display-${route.id}`);
                 let etas = []; let directSuccess = false;
                 
+                // 1. MTR Bus 需要使用 POST Request
                 if (route.transitType === 'MTR_BUS') {
                     try {
                         let routeName = route.route || '';
@@ -412,6 +358,7 @@
                         console.warn(`MTR Bus ETA 讀取失敗: ${route.route}`, mtrBusError);
                     }
                 } 
+                // 2. 其他公共交通工具使用標準 GET Request
                 else {
                     try {
                         const response = await fetch(route.apiUrl, { method: 'GET', headers: { "Accept": "application/json" } });
@@ -428,25 +375,13 @@
                     }
                 }
 
+                // 更新 UI 顯示
                 if (display) {
-                    const isTerminalStart = etas.isDeparting === true; 
-                    
                     etas = etas.slice(0, 3).sort((a, b) => a - b);
                     if (etas.length > 0) {
                         const etaHtml = etas.map(min => {
                             let colorClass = min <= 5 ? "text-green-600" : (min <= 15 ? "text-orange-500" : "text-gray-800");
-                            
-                            let timeText = min;
-                            let unit = `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
-                            
-                            // 🌟 植入功能一：雙重渲染攔截！確保任何負數都當做 0 處理，杜絕「-1 分鐘」
-                            if (min <= 0) {
-                                const arrivingText = getTranslation('arriving', '即將抵達');
-                                const departingText = getTranslation('departing', '即將開出');
-                                timeText = isTerminalStart ? departingText : arrivingText;
-                                unit = ""; 
-                            }
-                            
+                            let timeText = min === 0 ? getTranslation('arriving', '即將抵達') : min; let unit = min === 0 ? "" : `<span class="text-gray-500 text-xs ml-1">${getTranslation('minutes', '分鐘')}</span>`;
                             return `<span class="${colorClass} font-black text-xl">${timeText}</span>${unit}`;
                         }).join('<span class="text-gray-300 mx-2">|</span>');
                         display.innerHTML = etaHtml;
@@ -458,12 +393,15 @@
         function parseRawTrafficJson(routeObj, json, now) {
             let etas = []; let transitType = routeObj.transitType; let apiUrl = routeObj.apiUrl;
             
+            // 👇 幫你裝嘅「偷聽器」，用嚟檢查 MTR 傳返嚟咩資料
+            console.log(`[ETA Debug] Route: ${routeObj.route} | Transit: ${transitType}`, { 
+                url: apiUrl, 
+                rawData: json 
+            });
+
             try {
                 if (transitType === 'KMB' || transitType === 'LWB' || transitType === 'CITYBUS' || transitType === 'CTB') {
-                    if (json.data && Array.isArray(json.data)) {
-                        etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
-                        if (json.data.some(item => String(item.seq) === '1')) etas.isDeparting = true;
-                    }
+                    if (json.data && Array.isArray(json.data)) etas = json.data.filter(item => item.eta).map(item => Math.max(0, Math.floor((new Date(item.eta).getTime() - now) / 60000)));
                 } else if (transitType === 'MTR') {
                     const urlObj = new URL(apiUrl); 
                     const line = urlObj.searchParams.get('line'), dir = urlObj.searchParams.get('dir'), sta = urlObj.searchParams.get('sta'); 
@@ -471,36 +409,32 @@
                     
                     if (json.data && json.data[mtrKey] && Array.isArray(json.data[mtrKey][dir])) {
                         let systemTimeStr = json.curr_time;
-                        let serverTime = now; 
+                        let serverTime = now; // 預設用手機時間
                         
+                        // 判斷 MTR 伺服器時間是否正常
                         if (systemTimeStr && systemTimeStr !== '-' && systemTimeStr.trim() !== '') {
                             serverTime = new Date(systemTimeStr.replace(/-/g, '/')).getTime();
                         }
 
                         etas = json.data[mtrKey][dir].map(t => {
                             if (t.time && t.time !== '-') {
+                                // 正常情況：用時間戳計數
                                 return Math.max(0, Math.floor((new Date(t.time.replace(/-/g, '/')).getTime() - serverTime) / 60000));
                             } else if (t.ttnt !== undefined && t.ttnt !== null && t.ttnt !== '') {
+                                // 終極後備：如果 MTR 壞 time 但有畀 ttnt (倒數分鐘)，直接執死雞！
                                 return parseInt(t.ttnt, 10);
                             }
                             return null;
-                        }).filter(val => val !== null && !isNaN(val)); 
+                        }).filter(val => val !== null && !isNaN(val)); // 過濾走所有計唔到嘅廢料
                     }
                 
                 } else if (transitType === 'NLB') {
-                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) {
-                        etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
-                    }
+                    if (json.estimatedArrivals && Array.isArray(json.estimatedArrivals)) etas = json.estimatedArrivals.filter(t => t.estimatedArrivalTime).map(t => Math.max(0, Math.floor((new Date(t.estimatedArrivalTime.replace(/-/g, '/')).getTime() - now) / 60000)));
                 } else if (transitType === 'GMB') {
-                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) {
-                        // 🌟 植入功能一：防穿零底層保險，強制用 Math.max 將 API 傳回的負數拉回 0
-                        etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => Math.max(0, Number(e.diff)));
-                        if (String(json.data[0].route_seq) === '1') etas.isDeparting = true;
-                    }
+                    if (json.data && json.data.length > 0 && json.data[0].eta && Array.isArray(json.data[0].eta)) etas = json.data[0].eta.filter(e => e.diff !== undefined).map(e => e.diff);
                } else if (transitType === 'LRT') {
                     if (json.platform_list && Array.isArray(json.platform_list)) {
                         let rawEtas = [];
-                        let isTerminal = false;
                         json.platform_list.forEach(plat => {
                             if (plat.route_list && Array.isArray(plat.route_list)) {
                                 plat.route_list.forEach(r => {
@@ -509,14 +443,12 @@
                                     if (r.route_no === targetRoute) {
                                         let timeStr = r.time_en || '';
                                         if (timeStr.toLowerCase().includes('arriving')) rawEtas.push(0);
-                                        else if (timeStr.toLowerCase().includes('departing')) { rawEtas.push(0); isTerminal = true; }
                                         else if (timeStr.includes('min')) rawEtas.push(parseInt(timeStr));
                                     }
                                 });
                             }
                         });
                         etas = [...new Set(rawEtas)].filter(n => !isNaN(n)).sort((a, b) => a - b);
-                        if (isTerminal) etas.isDeparting = true;
                     }
                 } else if (transitType === 'MTR_BUS') {
                     if (json.busStop && Array.isArray(json.busStop)) {
@@ -529,6 +461,7 @@
                     }
                 }
             } catch (err) {
+                // 如果解析過程有 Error，印埋出嚟
                 console.error(`[ETA Parse Error] Route: ${routeObj.route}`, err);
             }
             return etas;
